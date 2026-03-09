@@ -155,11 +155,13 @@ async function startServer() {
       throw new Error("MONGO_URI não encontrada");
     }
 
-    await mongoose.connect(MONGO_URI, {
-      serverSelectionTimeoutMS: 5000
-    });
+    //await mongoose.connect(MONGO_URI, {
+     // serverSelectionTimeoutMS: 5000
+    //});
 
-    console.log("🟢 MongoDB conectado");
+    //console.log("🟢 MongoDB conectado");
+
+    const PORT = process.env.PORT || 8080;
 
     app.listen(PORT, "0.0.0.0", () => {
       console.log(`🚀 Servidor rodando na porta ${PORT}`);
