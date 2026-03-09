@@ -16,7 +16,7 @@ app.use(express.json());
    VARIÁVEIS
 ========================= */
 
-const PORT = process.env.PORT;
+const PORT = process.env.PORT || 8080;
 const MONGO_URI = process.env.MONGO_URI;
 const JWT_SECRET = process.env.JWT_SECRET || "avivai_secret";
 
