@@ -13,38 +13,35 @@ app.use(cors());
 app.use(express.json());
 
 /* =========================
-   CONEXÃO MONGODB
+   VARIÁVEIS
 ========================= */
 
-const mongoURI = process.env.MONGO_URI;
-
-if (!mongoURI) {
-  console.log("❌ MONGO_URI não encontrada");
-}
-
-mongoose
-  .connect(mongoURI)
-  .then(() => console.log("🟢 MongoDB conectado"))
-  .catch((err) => console.log("🔴 Erro MongoDB:", err));
+const PORT = process.env.PORT || 8080;
+const MONGO_URI = process.env.MONGO_URI;
+const JWT_SECRET = process.env.JWT_SECRET || "avivai_secret";
 
 /* =========================
-   MODEL USER
+   MODELO USER
 ========================= */
 
 const UserSchema = new mongoose.Schema({
   name: String,
   email: { type: String, unique: true },
-  password: String,
+  password: String
 });
 
 const User = mongoose.model("User", UserSchema);
 
 /* =========================
-   TESTE
+   ROTAS
 ========================= */
 
 app.get("/", (req, res) => {
-  res.send("Backend AVIVAI rodando 🚀");
+  res.status(200).json({
+    status: "online",
+    service: "AVIVAI API",
+    message: "Servidor funcionando 🚀"
+  });
 });
 
 /* =========================
@@ -53,23 +50,38 @@ app.get("/", (req, res) => {
 
 app.post("/register", async (req, res) => {
   try {
+
     const { name, email, password } = req.body;
+
+    const userExist = await User.findOne({ email });
+
+    if (userExist) {
+      return res.status(400).json({
+        error: "Usuário já existe"
+      });
+    }
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const user = await User.create({
       name,
       email,
-      password: hashedPassword,
+      password: hashedPassword
     });
 
     res.json({
       message: "Usuário criado com sucesso",
-      user,
+      userId: user._id
     });
+
   } catch (error) {
+
     console.log(error);
-    res.status(500).json({ error: "Erro ao registrar usuário" });
+
+    res.status(500).json({
+      error: "Erro ao registrar"
+    });
+
   }
 });
 
@@ -78,50 +90,79 @@ app.post("/register", async (req, res) => {
 ========================= */
 
 app.post("/login", async (req, res) => {
+
   try {
+
     const { email, password } = req.body;
 
     const user = await User.findOne({ email });
 
     if (!user) {
       return res.status(400).json({
-        error: "Usuário não encontrado",
+        error: "Usuário não encontrado"
       });
     }
 
-    const match = await bcrypt.compare(password, user.password);
+    const validPassword = await bcrypt.compare(password, user.password);
 
-    if (!match) {
+    if (!validPassword) {
       return res.status(400).json({
-        error: "Senha inválida",
+        error: "Senha inválida"
       });
     }
 
     const token = jwt.sign(
       { id: user._id },
-      "segredo_avivai",
+      JWT_SECRET,
       { expiresIn: "7d" }
     );
 
     res.json({
       token,
-      userId: user._id,
       name: user.name,
+      userId: user._id
     });
+
   } catch (error) {
+
     console.log(error);
+
     res.status(500).json({
-      error: "Erro no login",
+      error: "Erro no login"
     });
+
   }
+
 });
 
 /* =========================
-   SERVER
+   START SERVER
 ========================= */
 
-const PORT = process.env.PORT || 3000;
+async function startServer() {
 
-app.listen(PORT, () => {
-  console.log("🚀 Servidor rodando na porta", PORT);
-});
+  try {
+
+    if (!MONGO_URI) {
+      throw new Error("MONGO_URI não encontrada");
+    }
+
+    await mongoose.connect(MONGO_URI, {
+      serverSelectionTimeoutMS: 5000
+    });
+
+    console.log("🟢 MongoDB conectado");
+
+    app.listen(PORT, "0.0.0.0", () => {
+      console.log(`🚀 Servidor rodando na porta ${PORT}`);
+    });
+
+  } catch (error) {
+
+    console.error("Erro ao iniciar servidor:", error);
+
+  }
+
+}
+
+startServer();
