@@ -16,7 +16,7 @@ app.use(express.json());
    VARIÁVEIS
 ========================= */
 
-const PORT = process.env.PORT || 8080;
+const PORT = process.env.PORT;
 const MONGO_URI = process.env.MONGO_URI;
 const JWT_SECRET = process.env.JWT_SECRET || "avivai_secret";
 
@@ -37,19 +37,14 @@ const User = mongoose.model("User", UserSchema);
 ========================= */
 
 app.get("/", (req, res) => {
-  res.status(200).json({
+  res.json({
     status: "online",
-    service: "AVIVAI API",
-    message: "Servidor funcionando 🚀"
+    service: "AVIVAI API"
   });
 });
 
 app.get("/health", (req, res) => {
-  res.status(200).json({
-    status: "online",
-    service: "AVIVAI API",
-    message: "API online"
-  });
+  res.send("API online");
 });
 
 /* =========================
@@ -57,6 +52,7 @@ app.get("/health", (req, res) => {
 ========================= */
 
 app.post("/register", async (req, res) => {
+
   try {
 
     const { name, email, password } = req.body;
@@ -78,7 +74,7 @@ app.post("/register", async (req, res) => {
     });
 
     res.json({
-      message: "Usuário criado com sucesso",
+      message: "Usuário criado",
       userId: user._id
     });
 
@@ -91,6 +87,7 @@ app.post("/register", async (req, res) => {
     });
 
   }
+
 });
 
 /* =========================
@@ -147,32 +144,6 @@ app.post("/login", async (req, res) => {
    START SERVER
 ========================= */
 
-async function startServer() {
-
-  try {
-
-    if (!MONGO_URI) {
-      throw new Error("MONGO_URI não encontrada");
-    }
-
-    //await mongoose.connect(MONGO_URI, {
-     // serverSelectionTimeoutMS: 5000
-    //});
-
-    //console.log("🟢 MongoDB conectado");
-
-    const PORT = process.env.PORT || 8080;
-
-    app.listen(PORT, "0.0.0.0", () => {
-      console.log(`🚀 Servidor rodando na porta ${PORT}`);
-    });
-
-  } catch (error) {
-
-    console.error("Erro ao iniciar servidor:", error);
-
-  }
-
-}
-
-startServer();
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`🚀 Servidor rodando na porta ${PORT}`);
+});
