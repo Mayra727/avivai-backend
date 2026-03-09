@@ -6,7 +6,11 @@ import { MercadoPagoConfig, Preference } from "mercadopago";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
-dotenv.config();
+import dotenv from "dotenv";
+
+dotenv.config({
+  path: ".env",
+});
 
 const app = express();
 app.use(cors());
