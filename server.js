@@ -6,6 +6,7 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { MercadoPagoConfig, Preference } from "mercadopago";
 import PDFDocument from "pdfkit";
+import fetch from "node-fetch";
 
 dotenv.config();
 
