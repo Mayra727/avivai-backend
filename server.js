@@ -113,17 +113,43 @@ app.post("/webhook/mercadopago", async (req, res) => {
 
   try {
 
-    const payment = req.body;
+    const body = req.body;
 
-    console.log("Webhook recebido:", payment);
+    console.log("Webhook recebido:", body);
 
-    if (payment.type === "payment") {
+    if (body.type === "payment") {
 
-      const paymentId = payment.data.id;
+      const paymentId = body.data.id;
 
-      console.log("Pagamento aprovado:", paymentId);
+      console.log("Pagamento ID:", paymentId);
 
-      // Aqui depois vamos buscar os dados do pagamento
+      const paymentResponse = await fetch(
+        `https://api.mercadopago.com/v1/payments/${paymentId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${process.env.MP_ACCESS_TOKEN}`
+          }
+        }
+      );
+
+      const paymentData = await paymentResponse.json();
+
+      console.log("Dados pagamento:", paymentData);
+
+      if (paymentData.status === "approved") {
+
+        const userId = paymentData.metadata.userId;
+        const courseId = paymentData.metadata.courseId;
+
+        await Purchase.create({
+          userId,
+          courseId,
+          paymentId
+        });
+
+        console.log("Compra salva no banco");
+
+      }
 
     }
 
@@ -131,8 +157,7 @@ app.post("/webhook/mercadopago", async (req, res) => {
 
   } catch (error) {
 
-    console.log(error);
-
+    console.log("Erro webhook:", error);
     res.sendStatus(500);
 
   }
@@ -366,19 +391,26 @@ app.post("/create-payment", async (req, res) => {
 
   try {
 
-    const { title, price } = req.body;
+    const { title, price, userId, courseId } = req.body;
 
     const preference = new Preference(client);
 
     const response = await preference.create({
       body: {
+
         items: [
           {
             title: title,
             unit_price: Number(price),
             quantity: 1
           }
-        ]
+        ],
+
+        metadata: {
+          userId: userId,
+          courseId: courseId
+        }
+
       }
     });
 
@@ -392,6 +424,38 @@ app.post("/create-payment", async (req, res) => {
 
     res.status(500).json({
       error: "Erro ao criar pagamento"
+    });
+
+  }
+
+});
+
+/* =========================
+   MEUS CURSOS
+========================= */
+
+app.get("/my-courses/:userId", async (req, res) => {
+
+  try {
+
+    const purchases = await Purchase.find({
+      userId: req.params.userId
+    });
+
+    const courseIds = purchases.map(p => p.courseId);
+
+    const courses = await Course.find({
+      _id: { $in: courseIds }
+    });
+
+    res.json(courses);
+
+  } catch (error) {
+
+    console.log(error);
+
+    res.status(500).json({
+      error: "Erro ao buscar cursos"
     });
 
   }
