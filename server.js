@@ -396,23 +396,31 @@ app.post("/create-payment", async (req, res) => {
     const preference = new Preference(client);
 
     const response = await preference.create({
-      body: {
+  body: {
 
-        items: [
-          {
-            title: title,
-            unit_price: Number(price),
-            quantity: 1
-          }
-        ],
-
-        metadata: {
-          userId: userId,
-          courseId: courseId
-        }
-
+    items: [
+      {
+        title: title,
+        unit_price: Number(price),
+        quantity: 1
       }
-    });
+    ],
+
+    metadata: {
+      userId: userId,
+      courseId: courseId
+    },
+
+    back_urls: {
+      success: "http://localhost:5173/payment-success",
+      failure: "http://localhost:5173/payment-error",
+      pending: "http://localhost:5173/payment-pending"
+    },
+
+    auto_return: "approved"
+
+  }
+});
 
     res.json({
       id: response.id
@@ -461,6 +469,69 @@ app.get("/my-courses/:userId", async (req, res) => {
   }
 
 });
+
+/* =========================
+   VERIFICAR PAGAMENTO
+========================= */
+
+app.get("/verify-payment/:paymentId", async (req, res) => {
+
+  try {
+
+    const paymentId = req.params.paymentId;
+
+    const response = await fetch(
+      `https://api.mercadopago.com/v1/payments/${paymentId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.MP_ACCESS_TOKEN}`
+        }
+      }
+    );
+
+    const payment = await response.json();
+
+    if (payment.status === "approved") {
+
+      const userId = payment.metadata.userId;
+      const courseId = payment.metadata.courseId;
+
+      const exists = await Purchase.findOne({
+        paymentId
+      });
+
+      if (!exists) {
+
+        await Purchase.create({
+          userId,
+          courseId,
+          paymentId
+        });
+
+      }
+
+      return res.json({
+        success: true
+      });
+
+    }
+
+    res.json({
+      success: false
+    });
+
+  } catch (error) {
+
+    console.log(error);
+
+    res.status(500).json({
+      error: "Erro ao verificar pagamento"
+    });
+
+  }
+
+});
+
 
 /* =========================
    START SERVER
