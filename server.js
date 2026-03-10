@@ -203,10 +203,7 @@ app.get("/courses/:courseId/lessons", async (req, res) => {
 ========================= */
 
 app.get("/", (req, res) => {
-  res.json({
-    status: "online",
-    service: "AVIVAI API"
-  });
+  res.send("API AVIVAI ONLINE 🚀");
 });
 
 app.get("/health", (req, res) => {
