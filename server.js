@@ -14,8 +14,6 @@ const client = new MercadoPagoConfig({
   accessToken: process.env.MP_ACCESS_TOKEN
 });
 
-dotenv.config();
-
 const app = express();
 
 app.use(cors());
@@ -206,8 +204,8 @@ app.get("/", (req, res) => {
   res.send("API AVIVAI ONLINE 🚀");
 });
 
-app.get("/health", (req, res) => {
-  res.send("API online");
+app.get("/healthz", (req, res) => {
+  res.status(200).send("OK");
 });
 
 /* =========================
@@ -404,6 +402,6 @@ app.post("/create-payment", async (req, res) => {
    START SERVER
 ========================= */
 
-app.listen(PORT, "0.0.0.0", () => {
-  console.log(`🚀 Servidor rodando na porta ${PORT}`);
+app.listen(PORT, () => {
+  console.log(`🚀 API AVIVAI ONLINE NA PORTA ${PORT}`);
 });
