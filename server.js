@@ -5,6 +5,7 @@ import mongoose from "mongoose";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { MercadoPagoConfig, Preference } from "mercadopago";
+import PDFDocument from "pdfkit";
 
 dotenv.config();
 
@@ -117,7 +118,7 @@ app.post("/webhook/mercadopago", async (req, res) => {
 
     console.log("Webhook recebido:", body);
 
-    if (body.type === "payment") {
+    if (body.action === "payment.updated") {
 
       const paymentId = body.data.id;
 
@@ -387,6 +388,10 @@ app.post("/login", async (req, res) => {
    PAGAMENTO MERCADO PAGO
 ========================= */
 
+/* =========================
+   PAGAMENTO MERCADO PAGO
+========================= */
+
 app.post("/create-payment", async (req, res) => {
 
   try {
@@ -396,31 +401,31 @@ app.post("/create-payment", async (req, res) => {
     const preference = new Preference(client);
 
     const response = await preference.create({
-  body: {
+      body: {
 
-    items: [
-      {
-        title: title,
-        unit_price: Number(price),
-        quantity: 1
+        items: [
+          {
+            title: title,
+            unit_price: Number(price),
+            quantity: 1
+          }
+        ],
+
+        metadata: {
+          userId: userId,
+          courseId: courseId
+        },
+
+        back_urls: {
+          success: "http://localhost:5173/payment-success",
+          failure: "http://localhost:5173/payment-error",
+          pending: "http://localhost:5173/payment-pending"
+        },
+
+        auto_return: "approved"
+
       }
-    ],
-
-    metadata: {
-      userId: userId,
-      courseId: courseId
-    },
-
-    back_urls: {
-      success: "http://localhost:5173/payment-success",
-      failure: "http://localhost:5173/payment-error",
-      pending: "http://localhost:5173/payment-pending"
-    },
-
-    auto_return: "approved"
-
-  }
-});
+    });
 
     res.json({
       id: response.id
@@ -532,6 +537,91 @@ app.get("/verify-payment/:paymentId", async (req, res) => {
 
 });
 
+/* =========================
+   GERAR CERTIFICADO
+========================= */
+
+app.get("/certificate/:userId/:courseId", async (req, res) => {
+
+  try {
+
+    const { userId, courseId } = req.params;
+
+    const user = await User.findById(userId);
+    const course = await Course.findById(courseId);
+
+    if (!user || !course) {
+      return res.status(404).json({
+        error: "Usuário ou curso não encontrado"
+      });
+    }
+
+    const doc = new PDFDocument({
+      size: "A4",
+      layout: "landscape"
+    });
+
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename=certificado-${course.title}.pdf`
+    );
+
+    res.setHeader("Content-Type", "application/pdf");
+
+    doc.pipe(res);
+
+    doc.fontSize(40).text("CERTIFICADO", {
+      align: "center"
+    });
+
+    doc.moveDown();
+
+    doc.fontSize(20).text(
+      `Certificamos que`,
+      { align: "center" }
+    );
+
+    doc.moveDown();
+
+    doc.fontSize(30).text(
+      user.name,
+      { align: "center" }
+    );
+
+    doc.moveDown();
+
+    doc.fontSize(20).text(
+      `concluiu o curso`,
+      { align: "center" }
+    );
+
+    doc.moveDown();
+
+    doc.fontSize(25).text(
+      course.title,
+      { align: "center" }
+    );
+
+    doc.moveDown();
+
+    doc.fontSize(16).text(
+      `Data: ${new Date().toLocaleDateString()}`,
+      { align: "center" }
+    );
+
+    doc.end();
+
+  } catch (error) {
+
+    console.log(error);
+
+    res.status(500).json({
+      error: "Erro ao gerar certificado"
+    });
+
+  }
+
+});
 
 /* =========================
    START SERVER
