@@ -389,10 +389,6 @@ app.post("/login", async (req, res) => {
    PAGAMENTO MERCADO PAGO
 ========================= */
 
-/* =========================
-   PAGAMENTO MERCADO PAGO
-========================= */
-
 app.post("/create-payment", async (req, res) => {
 
   try {
@@ -417,11 +413,11 @@ app.post("/create-payment", async (req, res) => {
           courseId: courseId
         },
 
-        back_urls: {
-          success: "http://localhost:5173/payment-success",
-          failure: "http://localhost:5173/payment-error",
-          pending: "http://localhost:5173/payment-pending"
-        },
+       back_urls: {
+  success: "https://avivai.vercel.app/payment-success",
+  failure: "https://avivai.vercel.app/payment-error",
+  pending: "https://avivai.vercel.app/payment-pending"
+},
 
         auto_return: "approved"
 
