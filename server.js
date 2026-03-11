@@ -140,8 +140,8 @@ app.post("/webhook/mercadopago", async (req, res) => {
 
       if (paymentData.status === "approved") {
 
-        const userId = paymentData.metadata.user_Id;
-        const courseId = paymentData.metadata.course_Id;
+        const userId = paymentData.metadata.user_id;
+const courseId = paymentData.metadata.course_id;
 
         const exists = await Purchase.findOne({ paymentId });
 
