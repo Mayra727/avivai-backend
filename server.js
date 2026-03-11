@@ -414,12 +414,11 @@ app.post("/create-payment", async (req, res) => {
         },
 
        back_urls: {
-  success: "https://avivai.vercel.app/payment-success",
-  failure: "https://avivai.vercel.app/payment-error",
-  pending: "https://avivai.vercel.app/payment-pending"
+  success: `${process.env.FRONTEND_URL}/payment-success`,
+  failure: `${process.env.FRONTEND_URL}/payment-error`,
+  pending: `${process.env.FRONTEND_URL}/payment-pending`
 },
-
-        auto_return: "approved"
+auto_return: "approved"
 
       }
     });
