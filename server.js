@@ -458,21 +458,29 @@ app.get("/my-courses/:userId", async (req, res) => {
 
   try {
 
+    console.log("Buscando cursos do usuário:", req.params.userId);
+
     const purchases = await Purchase.find({
       userId: req.params.userId
     });
 
+    console.log("Compras encontradas:", purchases);
+
     const courseIds = purchases.map(p => p.courseId);
+
+    console.log("IDs dos cursos:", courseIds);
 
     const courses = await Course.find({
       _id: { $in: courseIds }
     });
 
+    console.log("Cursos retornados:", courses);
+
     res.json(courses);
 
   } catch (error) {
 
-    console.log(error);
+    console.log("Erro ao buscar cursos:", error);
 
     res.status(500).json({
       error: "Erro ao buscar cursos"
