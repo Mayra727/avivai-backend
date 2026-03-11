@@ -119,7 +119,7 @@ app.post("/webhook/mercadopago", async (req, res) => {
 
     console.log("Webhook recebido:", body);
 
-    if (body.action === "payment.updated") {
+    if (body.type === "payment") {
 
       const paymentId = body.data.id;
 
@@ -143,13 +143,19 @@ app.post("/webhook/mercadopago", async (req, res) => {
         const userId = paymentData.metadata.userId;
         const courseId = paymentData.metadata.courseId;
 
-        await Purchase.create({
-          userId,
-          courseId,
-          paymentId
-        });
+        const exists = await Purchase.findOne({ paymentId });
 
-        console.log("Compra salva no banco");
+        if (!exists) {
+
+          await Purchase.create({
+            userId,
+            courseId,
+            paymentId
+          });
+
+          console.log("Compra salva no banco");
+
+        }
 
       }
 
@@ -160,6 +166,7 @@ app.post("/webhook/mercadopago", async (req, res) => {
   } catch (error) {
 
     console.log("Erro webhook:", error);
+
     res.sendStatus(500);
 
   }
