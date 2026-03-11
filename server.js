@@ -404,31 +404,35 @@ app.post("/create-payment", async (req, res) => {
 
     const preference = new Preference(client);
 
-    const response = await preference.create({
-      body: {
+const response = await preference.create({
+  body: {
 
-        items: [
-          {
-            title: title,
-            unit_price: Number(price),
-            quantity: 1
-          }
-        ],
-
-        metadata: {
-          userId: userId,
-          courseId: courseId
-        },
-
-       back_urls: {
-  success: `${process.env.FRONTEND_URL}/payment-success`,
-  failure: `${process.env.FRONTEND_URL}/payment-error`,
-  pending: `${process.env.FRONTEND_URL}/payment-pending`
-},
-auto_return: "approved"
-
+    items: [
+      {
+        title: title,
+        unit_price: Number(price),
+        quantity: 1
       }
-    });
+    ],
+
+    metadata: {
+      userId: userId,
+      courseId: courseId
+    },
+
+    back_urls: {
+      success: `${process.env.FRONTEND_URL}/payment-success`,
+      failure: `${process.env.FRONTEND_URL}/payment-error`,
+      pending: `${process.env.FRONTEND_URL}/payment-pending`
+    },
+
+    auto_return: "approved",
+
+    notification_url:
+      "https://avivai-backend-production.up.railway.app/webhook/mercadopago"
+
+  }
+});
 
     res.json({
       id: response.id
