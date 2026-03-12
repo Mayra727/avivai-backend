@@ -80,13 +80,24 @@ const Course = mongoose.model("Course", CourseSchema);
 ========================= */
 
 const LessonSchema = new mongoose.Schema({
-  courseId: String,
-  title: String,
-  videoUrl: String,
-  order: Number
-});
 
-const Lesson = mongoose.model("Lesson", LessonSchema);
+  courseId: String,
+
+  title: String,
+
+  contentType: {
+    type: String,
+    enum: ["video", "pdf"],
+    default: "video"
+  },
+
+  videoUrl: String,
+
+  pdfUrl: String,
+
+  order: Number
+
+});
 
 /* =========================
    MODELO PURCHASE
@@ -140,8 +151,8 @@ app.post("/webhook/mercadopago", async (req, res) => {
 
       if (paymentData.status === "approved") {
 
-        const userId = paymentData.metadata.user_id;
-const courseId = paymentData.metadata.course_id;
+        const userId = paymentData.metadata.userId;
+const courseId = paymentData.metadata.courseId;
 
         const exists = await Purchase.findOne({ paymentId });
 
