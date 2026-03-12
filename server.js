@@ -7,6 +7,8 @@ import jwt from "jsonwebtoken";
 import { MercadoPagoConfig, Preference } from "mercadopago";
 import PDFDocument from "pdfkit";
 import fetch from "node-fetch";
+import path from "path";
+import fs from "fs";
 
 dotenv.config();
 
@@ -644,6 +646,41 @@ app.get("/certificate/:userId/:courseId", async (req, res) => {
   }
 
 });
+
+/* =========================
+   DOWNLOAD EBOOK PROTEGIDO
+========================= */
+
+app.get("/download/:paymentId", async (req, res) => {
+
+  try {
+
+    const paymentId = req.params.paymentId;
+
+    const purchase = await Purchase.findOne({ paymentId });
+
+    if (!purchase) {
+      return res.status(403).json({
+        error: "Compra não encontrada"
+      });
+    }
+
+    const filePath = path.join(process.cwd(), "storage", "ebook-intimidade.pdf");
+
+    res.download(filePath);
+
+  } catch (error) {
+
+    console.log(error);
+
+    res.status(500).json({
+      error: "Erro ao baixar ebook"
+    });
+
+  }
+
+});
+
 
 /* =========================
    START SERVER
