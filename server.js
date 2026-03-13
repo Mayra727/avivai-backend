@@ -9,7 +9,7 @@ import PDFDocument from "pdfkit";
 import fetch from "node-fetch";
 import path from "path";
 import fs from "fs";
-import jwt from "jsonwebtoken";
+
 
 dotenv.config();
 
