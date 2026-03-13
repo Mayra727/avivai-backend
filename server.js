@@ -9,6 +9,7 @@ import PDFDocument from "pdfkit";
 import fetch from "node-fetch";
 import path from "path";
 import fs from "fs";
+import jwt from "jsonwebtoken";
 
 dotenv.config();
 
@@ -561,6 +562,46 @@ app.get("/verify-payment/:paymentId", async (req, res) => {
 
 });
 
+
+/* =========================
+   GERAR TOKEN DOWNLOAD
+========================= */
+
+app.get("/download/:paymentId", async (req, res) => {
+
+  try {
+
+    const paymentId = req.params.paymentId;
+
+    const purchase = await Purchase.findOne({ paymentId });
+
+    if (!purchase) {
+      return res.status(403).json({
+        error: "Compra não encontrada"
+      });
+    }
+
+    const token = jwt.sign(
+      { paymentId },
+      process.env.JWT_SECRET,
+      { expiresIn: "10m" }
+    );
+
+    res.json({
+      downloadToken: token
+    });
+
+  } catch (error) {
+
+    console.log(error);
+
+    res.status(500).json({
+      error: "Erro ao gerar download"
+    });
+
+  }
+
+});
 /* =========================
    GERAR CERTIFICADO
 ========================= */
