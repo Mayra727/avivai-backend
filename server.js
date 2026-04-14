@@ -62,14 +62,32 @@ const UserSchema = new mongoose.Schema({
 const User = mongoose.model("User", UserSchema);
 
 /* =========================
-   MODELO COURSE
+   MODELO COURSE (ATUALIZADO)
 ========================= */
 
 const CourseSchema = new mongoose.Schema({
   title: String,
-  description: String,
-  price: Number,
+  price: {
+  type: Number,
+  default: 0
+},
+
+  modules: [
+    {
+      title: String,
+      lessons: [
+        {
+          title: String,
+          type: String,     // video, pdf, image, text
+          content: String,  // URL
+          cover: String     // capa do PDF
+        }
+      ]
+    }
+  ],
+
   creatorId: String,
+
   createdAt: {
     type: Date,
     default: Date.now
@@ -77,6 +95,22 @@ const CourseSchema = new mongoose.Schema({
 });
 
 const Course = mongoose.model("Course", CourseSchema);
+
+/* =========================
+   MODELO BOOK (NOVO)
+========================= */
+
+const BookSchema = new mongoose.Schema({
+  title: String,
+  cover: String,
+  url: String,
+  createdAt: {
+    type: Date,
+    default: Date.now
+  }
+});
+
+const Book = mongoose.model("Book", BookSchema);
 
 /* =========================
    MODELO LESSON
@@ -245,6 +279,36 @@ app.get("/courses/:courseId/lessons", async (req, res) => {
 });
 
 /* =========================
+   LIVROS (BIBLIOTECA)
+========================= */
+
+// 📚 CRIAR LIVRO
+app.post("/books", async (req, res) => {
+  try {
+    const book = await Book.create(req.body);
+    res.json(book);
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      error: "Erro ao criar livro"
+    });
+  }
+});
+
+// 📚 LISTAR LIVROS
+app.get("/books", async (req, res) => {
+  try {
+    const books = await Book.find();
+    res.json(books);
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      error: "Erro ao buscar livros"
+    });
+  }
+});
+
+/* =========================
    ROTAS
 ========================= */
 
@@ -264,15 +328,14 @@ app.post("/courses", async (req, res) => {
 
   try {
 
-    const { title, description, price, creatorId } = req.body;
+    const { title, price, modules, creatorId } = req.body;
 
-    const course = await Course.create({
-      title,
-      description,
-      price,
-      creatorId
-    });
-
+const course = await Course.create({
+  title,
+  price: Number(price),
+  modules,
+  creatorId
+});
     res.json(course);
 
   } catch (error) {
@@ -692,8 +755,7 @@ app.get("/certificate/:userId/:courseId", async (req, res) => {
    DOWNLOAD EBOOK PROTEGIDO
 ========================= */
 
-app.get("/download/:paymentId", async (req, res) => {
-
+app.get("/download-ebook/:paymentId", async (req, res) => {
   try {
 
     const paymentId = req.params.paymentId;
