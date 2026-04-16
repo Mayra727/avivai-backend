@@ -375,6 +375,34 @@ app.get("/courses", async (req, res) => {
 });
 
 /* =========================
+   BUSCAR CURSO POR ID
+========================= */
+
+app.get("/courses/:id", async (req, res) => {
+  try {
+
+    const course = await Course.findById(req.params.id);
+
+    if (!course) {
+      return res.status(404).json({
+        error: "Curso não encontrado"
+      });
+    }
+
+    res.json(course);
+
+  } catch (error) {
+
+    console.error(error);
+
+    res.status(500).json({
+      error: "Erro ao buscar curso"
+    });
+
+  }
+});
+
+/* =========================
    REGISTRO
 ========================= */
 
