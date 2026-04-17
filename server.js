@@ -222,11 +222,130 @@ const courseId = paymentData.metadata.courseId;
 });
 
 /* =========================
+   ROTAS
+========================= */
+
+app.get("/", (req, res) => {
+  res.send("API AVIVAI ONLINE 🚀");
+});
+
+app.get("/healthz", (req, res) => {
+  res.status(200).send("OK");
+});
+
+
+/* =========================
+   CRIAR CURSO
+========================= */
+
+app.post("/courses", async (req, res) => {
+  try {
+
+    const { title, price, modules, creatorId } = req.body;
+
+    const course = await Course.create({
+      title,
+      price: Number(price),
+      modules,
+      creatorId
+    });
+
+    res.json(course);
+
+  } catch (error) {
+
+    console.log(error);
+
+    res.status(500).json({
+      error: "Erro ao criar curso"
+    });
+
+  }
+});
+
+
+/* =========================
+   LISTAR CURSOS
+========================= */
+
+app.get("/courses", async (req, res) => {
+  try {
+
+    const courses = await Course.find();
+
+    res.json(courses);
+
+  } catch (error) {
+
+    console.log(error);
+
+    res.status(500).json({
+      error: "Erro ao buscar cursos"
+    });
+
+  }
+});
+
+
+/* =========================
+   BUSCAR CURSO POR ID
+========================= */
+
+app.get("/courses/:id", async (req, res) => {
+  try {
+
+    const course = await Course.findById(req.params.id);
+
+    if (!course) {
+      return res.status(404).json({
+        error: "Curso não encontrado"
+      });
+    }
+
+    res.json(course);
+
+  } catch (error) {
+
+    console.error(error);
+
+    res.status(500).json({
+      error: "Erro ao buscar curso"
+    });
+
+  }
+});
+
+
+/* =========================
+   LISTAR AULAS DO CURSO
+========================= */
+
+app.get("/courses/:courseId/lessons", async (req, res) => {
+  try {
+
+    const lessons = await Lesson.find({
+      courseId: req.params.courseId
+    }).sort({ order: 1 });
+
+    res.json(lessons);
+
+  } catch (error) {
+
+    console.log(error);
+
+    res.status(500).json({
+      error: "Erro ao buscar aulas"
+    });
+
+  }
+});
+
+
+/* =========================
    CRIAR AULA
 ========================= */
 
 app.post("/lessons", async (req, res) => {
-
   try {
 
     const { courseId, title, videoUrl, order } = req.body;
@@ -249,34 +368,8 @@ app.post("/lessons", async (req, res) => {
     });
 
   }
-
 });
 
-/* =========================
-   LISTAR AULAS DO CURSO
-========================= */
-
-app.get("/courses/:courseId/lessons", async (req, res) => {
-
-  try {
-
-    const lessons = await Lesson.find({
-      courseId: req.params.courseId
-    }).sort({ order: 1 });
-
-    res.json(lessons);
-
-  } catch (error) {
-
-    console.log(error);
-
-    res.status(500).json({
-      error: "Erro ao buscar aulas"
-    });
-
-  }
-
-});
 
 /* =========================
    LIVROS (BIBLIOTECA)
@@ -305,100 +398,6 @@ app.get("/books", async (req, res) => {
     res.status(500).json({
       error: "Erro ao buscar livros"
     });
-  }
-});
-
-/* =========================
-   ROTAS
-========================= */
-
-app.get("/", (req, res) => {
-  res.send("API AVIVAI ONLINE 🚀");
-});
-
-app.get("/healthz", (req, res) => {
-  res.status(200).send("OK");
-});
-
-/* =========================
-   CRIAR CURSO
-========================= */
-
-app.post("/courses", async (req, res) => {
-
-  try {
-
-    const { title, price, modules, creatorId } = req.body;
-
-const course = await Course.create({
-  title,
-  price: Number(price),
-  modules,
-  creatorId
-});
-    res.json(course);
-
-  } catch (error) {
-
-    console.log(error);
-
-    res.status(500).json({
-      error: "Erro ao criar curso"
-    });
-
-  }
-
-});
-
-/* =========================
-   LISTAR CURSOS
-========================= */
-
-app.get("/courses", async (req, res) => {
-
-  try {
-
-    const courses = await Course.find();
-
-    res.json(courses);
-
-  } catch (error) {
-
-    console.log(error);
-
-    res.status(500).json({
-      error: "Erro ao buscar cursos"
-    });
-
-  }
-
-});
-
-/* =========================
-   BUSCAR CURSO POR ID
-========================= */
-
-app.get("/courses/:id", async (req, res) => {
-  try {
-
-    const course = await Course.findById(req.params.id);
-
-    if (!course) {
-      return res.status(404).json({
-        error: "Curso não encontrado"
-      });
-    }
-
-    res.json(course);
-
-  } catch (error) {
-
-    console.error(error);
-
-    res.status(500).json({
-      error: "Erro ao buscar curso"
-    });
-
   }
 });
 
