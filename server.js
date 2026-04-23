@@ -271,21 +271,22 @@ app.post("/courses", async (req, res) => {
 app.get("/courses", async (req, res) => {
   try {
 
-    const courses = await Course.find();
+    const { creatorId } = req.query;
+
+    let filter = {};
+
+    if (creatorId) {
+      filter.creatorId = creatorId;
+    }
+
+    const courses = await Course.find(filter);
 
     res.json(courses);
 
   } catch (error) {
-
-    console.log(error);
-
-    res.status(500).json({
-      error: "Erro ao buscar cursos"
-    });
-
+    res.status(500).json({ error: "Erro ao buscar cursos" });
   }
 });
-
 
 /* =========================
    BUSCAR CURSO POR ID
@@ -312,6 +313,20 @@ app.get("/courses/:id", async (req, res) => {
       error: "Erro ao buscar curso"
     });
 
+  }
+});
+
+
+app.delete("/courses/:id", async (req, res) => {
+  try {
+
+    await Course.findByIdAndDelete(req.params.id);
+
+    res.json({ message: "Curso deletado com sucesso" });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Erro ao deletar curso" });
   }
 });
 
