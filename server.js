@@ -120,6 +120,7 @@ app.get("/me", (req, res) => {
 // 🔥 CRIAR CURSO (FIX PRINCIPAL)
 // =========================
 app.post("/courses", async (req, res) => {
+  console.log("🔥 NOVO BACKEND ATIVO");
   try {
     let { title, price, modules, creatorId } = req.body;
 
