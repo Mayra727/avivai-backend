@@ -9,7 +9,7 @@ import PDFDocument from "pdfkit";
 import fetch from "node-fetch";
 import path from "path";
 import fs from "fs";
-
+import jwt from "jsonwebtoken";
 
 dotenv.config();
 
@@ -23,6 +23,32 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
+
+app.get("/me", (req, res) => {
+
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader) {
+    return res.status(401).json({ error: "Token não enviado" });
+  }
+
+  const token = authHeader.split(" ")[1];
+
+  try {
+
+    const decoded = jwt.verify(token, JWT_SECRET);
+
+    return res.json({
+      id: decoded.id,
+      name: decoded.name,
+      role: decoded.role
+    });
+
+  } catch (err) {
+    return res.status(401).json({ error: "Token inválido" });
+  }
+
+});
 
 /* =========================
    VARIÁVEIS
@@ -742,7 +768,7 @@ app.get("/certificate/:userId/:courseId", async (req, res) => {
     }
 
     const doc = new PDFDocument({
-      size: "A4",
+      size: "A5",
       layout: "landscape"
     });
 
