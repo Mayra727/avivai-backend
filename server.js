@@ -1,3 +1,6 @@
+// =========================
+// IMPORTS
+// =========================
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
@@ -12,76 +15,35 @@ import fs from "fs";
 
 dotenv.config();
 
-/* =========================
-   VARIÁVEIS (MOVER PRA CIMA)
-========================= */
-
+// =========================
+// CONFIG
+// =========================
 const PORT = process.env.PORT || 8080;
 const MONGO_URI = process.env.MONGO_URI;
-const JWT_SECRET = process.env.JWT_SECRET || "avivai_secret"; // 🔥 AQUI PRIMEIRO
-
-console.log("MP TOKEN:", process.env.MP_ACCESS_TOKEN);
+const JWT_SECRET = process.env.JWT_SECRET || "avivai_secret";
 
 const client = new MercadoPagoConfig({
   accessToken: process.env.MP_ACCESS_TOKEN
 });
 
-/* =========================
-   APP
-========================= */
-
+// =========================
+// APP
+// =========================
 const app = express();
-
 app.use(cors());
 app.use(express.json());
 
-/* =========================
-   ROTA /ME (AGORA CORRETA)
-========================= */
-
-app.get("/me", (req, res) => {
-
-  const authHeader = req.headers.authorization;
-
-  if (!authHeader) {
-    return res.status(401).json({ error: "Token não enviado" });
-  }
-
-  const token = authHeader.split(" ")[1];
-
-  try {
-
-    const decoded = jwt.verify(token, JWT_SECRET);
-
-    return res.json({
-      id: decoded.id,
-      name: decoded.name,
-      role: decoded.role
-    });
-
-  } catch (err) {
-    return res.status(401).json({ error: "Token inválido" });
-  }
-
-});
-
-/* =========================
-   CONEXÃO MONGODB
-========================= */
-
+// =========================
+// DB
+// =========================
 mongoose.connect(MONGO_URI)
-  .then(() => {
-    console.log("🟢 MongoDB conectado");
-  })
-  .catch((err) => {
-    console.error("Erro ao conectar MongoDB:", err);
-  });
+  .then(() => console.log("🟢 MongoDB conectado"))
+  .catch((err) => console.error("Erro Mongo:", err));
 
-/* =========================
-   MODELO USER
-========================= */
-
-const UserSchema = new mongoose.Schema({
+// =========================
+// MODELOS
+// =========================
+const User = mongoose.model("User", new mongoose.Schema({
   name: String,
   email: { type: String, unique: true },
   password: String,
@@ -90,123 +52,240 @@ const UserSchema = new mongoose.Schema({
     enum: ["superadmin", "produtor", "aluno"],
     default: "aluno"
   }
-})
+}));
 
-const User = mongoose.model("User", UserSchema);
-
-/* =========================
-   MODELO COURSE (ATUALIZADO)
-========================= */
-
-const CourseSchema = new mongoose.Schema({
+const Course = mongoose.model("Course", new mongoose.Schema({
   title: String,
-  price: {
-  type: Number,
-  default: 0
-},
-
+  price: { type: Number, default: 0 },
   modules: [
     {
       title: String,
       lessons: [
         {
           title: String,
-          type: String,     // video, pdf, image, text
-          content: String,  // URL
-          cover: String     // capa do PDF
+          type: String,
+          content: String,
+          cover: String
         }
       ]
     }
   ],
-
   creatorId: String,
+  createdAt: { type: Date, default: Date.now }
+}));
 
-  createdAt: {
-    type: Date,
-    default: Date.now
-  }
-});
-
-const Course = mongoose.model("Course", CourseSchema);
-
-/* =========================
-   MODELO BOOK (NOVO)
-========================= */
-
-const BookSchema = new mongoose.Schema({
+const Book = mongoose.model("Book", new mongoose.Schema({
   title: String,
   cover: String,
   url: String,
-  createdAt: {
-    type: Date,
-    default: Date.now
-  }
-});
+  createdAt: { type: Date, default: Date.now }
+}));
 
-const Book = mongoose.model("Book", BookSchema);
-
-/* =========================
-   MODELO LESSON
-========================= */
-
-const LessonSchema = new mongoose.Schema({
-
+const Lesson = mongoose.model("Lesson", new mongoose.Schema({
   courseId: String,
-
   title: String,
-
   contentType: {
     type: String,
     enum: ["video", "pdf"],
     default: "video"
   },
-
   videoUrl: String,
-
   pdfUrl: String,
-
   order: Number
+}));
 
-});
-
-/* =========================
-   MODELO PURCHASE
-========================= */
-
-const PurchaseSchema = new mongoose.Schema({
-
+const Purchase = mongoose.model("Purchase", new mongoose.Schema({
   userId: String,
   courseId: String,
   paymentId: String,
+  createdAt: { type: Date, default: Date.now }
+}));
 
-  createdAt: {
-    type: Date,
-    default: Date.now
-  }
-
-});
-
-const Purchase = mongoose.model("Purchase", PurchaseSchema);
-
-/* =========================
-   WEBHOOK MERCADO PAGO
-========================= */
-
-app.post("/webhook/mercadopago", async (req, res) => {
+// =========================
+// AUTH /ME
+// =========================
+app.get("/me", (req, res) => {
+  const token = req.headers.authorization?.split(" ")[1];
+  if (!token) return res.status(401).json({ error: "Token não enviado" });
 
   try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    res.json(decoded);
+  } catch {
+    res.status(401).json({ error: "Token inválido" });
+  }
+});
 
+// =========================
+// 🔥 CRIAR CURSO (FIX PRINCIPAL)
+// =========================
+app.post("/courses", async (req, res) => {
+  try {
+    let { title, price, modules, creatorId } = req.body;
+
+    console.log("BODY RECEBIDO:", JSON.stringify(req.body, null, 2));
+
+    if (!Array.isArray(modules)) modules = [];
+
+    const safeModules = modules.map((m) => {
+      let lessons = m.lessons;
+
+      if (typeof lessons === "string") {
+        try {
+          lessons = JSON.parse(lessons);
+        } catch {
+          console.log("Erro parse lessons");
+          lessons = [];
+        }
+      }
+
+      if (!Array.isArray(lessons)) lessons = [];
+
+      return {
+        title: m.title || "",
+        lessons: lessons.map((l) => ({
+          title: l.title || "",
+          type: l.type || "video",
+          content: l.content || "",
+          cover: l.cover || ""
+        }))
+      };
+    });
+
+    const course = await Course.create({
+      title,
+      price: Number(price),
+      modules: safeModules,
+      creatorId
+    });
+
+    res.json(course);
+
+  } catch (error) {
+    console.log("ERRO AO CRIAR CURSO:", error);
+    res.status(500).json({ error: "Erro ao criar curso" });
+  }
+});
+
+// =========================
+// CURSOS
+// =========================
+app.get("/courses/:id", async (req, res) => {
+  const course = await Course.findById(req.params.id);
+  if (!course) return res.status(404).json({ error: "Curso não encontrado" });
+  res.json(course);
+});
+
+app.delete("/courses/:id", async (req, res) => {
+  await Course.findByIdAndDelete(req.params.id);
+  res.json({ message: "Curso deletado" });
+});
+
+// =========================
+// AULAS
+// =========================
+app.get("/courses/:courseId/lessons", async (req, res) => {
+  const lessons = await Lesson.find({ courseId: req.params.courseId }).sort({ order: 1 });
+  res.json(lessons);
+});
+
+app.post("/lessons", async (req, res) => {
+  const lesson = await Lesson.create(req.body);
+  res.json(lesson);
+});
+
+// =========================
+// LIVROS
+// =========================
+app.post("/books", async (req, res) => {
+  const book = await Book.create(req.body);
+  res.json(book);
+});
+
+app.get("/books", async (req, res) => {
+  const books = await Book.find();
+  res.json(books);
+});
+
+// =========================
+// REGISTER / LOGIN
+// =========================
+app.post("/register", async (req, res) => {
+  const { name, email, password, role } = req.body;
+
+  const exists = await User.findOne({ email });
+  if (exists) return res.status(400).json({ error: "Usuário já existe" });
+
+  const hashed = await bcrypt.hash(password, 10);
+
+  const user = await User.create({
+    name,
+    email,
+    password: hashed,
+    role
+  });
+
+  res.json({ userId: user._id });
+});
+
+app.post("/login", async (req, res) => {
+  const { email, password } = req.body;
+
+  const user = await User.findOne({ email });
+  if (!user) return res.status(400).json({ error: "Usuário não encontrado" });
+
+  const valid = await bcrypt.compare(password, user.password);
+  if (!valid) return res.status(400).json({ error: "Senha inválida" });
+
+  const token = jwt.sign({
+    id: user._id,
+    name: user.name,
+    role: user.role
+  }, JWT_SECRET, { expiresIn: "7d" });
+
+  res.json({ token, userId: user._id, role: user.role });
+});
+
+// =========================
+// PAGAMENTO
+// =========================
+app.post("/create-payment", async (req, res) => {
+  const { title, price, userId, courseId } = req.body;
+
+  const preference = new Preference(client);
+
+  const response = await preference.create({
+    body: {
+      items: [{
+        title,
+        unit_price: Number(price),
+        quantity: 1
+      }],
+      metadata: { userId, courseId },
+      back_urls: {
+        success: `${process.env.FRONTEND_URL}/payment-success`,
+        failure: `${process.env.FRONTEND_URL}/payment-error`,
+        pending: `${process.env.FRONTEND_URL}/payment-pending`
+      },
+      auto_return: "approved",
+      notification_url: `${process.env.BASE_URL}/webhook/mercadopago`
+    }
+  });
+
+  res.json({ id: response.id });
+});
+
+// =========================
+// WEBHOOK
+// =========================
+app.post("/webhook/mercadopago", async (req, res) => {
+  try {
     const body = req.body;
 
-    console.log("Webhook recebido:", body);
-
     if (body.type === "payment") {
-
       const paymentId = body.data.id;
 
-      console.log("Pagamento ID:", paymentId);
-
-      const paymentResponse = await fetch(
+      const response = await fetch(
         `https://api.mercadopago.com/v1/payments/${paymentId}`,
         {
           headers: {
@@ -215,433 +294,32 @@ app.post("/webhook/mercadopago", async (req, res) => {
         }
       );
 
-      const paymentData = await paymentResponse.json();
+      const payment = await response.json();
 
-      console.log("Dados pagamento:", paymentData);
-
-      if (paymentData.status === "approved") {
-
-        const userId = paymentData.metadata.userId;
-const courseId = paymentData.metadata.courseId;
+      if (payment.status === "approved") {
+        const { userId, courseId } = payment.metadata;
 
         const exists = await Purchase.findOne({ paymentId });
 
         if (!exists) {
-
-          await Purchase.create({
-            userId,
-            courseId,
-            paymentId
-          });
-
-          console.log("Compra salva no banco");
-
+          await Purchase.create({ userId, courseId, paymentId });
         }
-
       }
-
     }
 
     res.sendStatus(200);
 
   } catch (error) {
-
     console.log("Erro webhook:", error);
-
     res.sendStatus(500);
-
-  }
-
-});
-
-/* =========================
-   ROTAS
-========================= */
-
-app.get("/", (req, res) => {
-  res.send("API AVIVAI ONLINE 🚀");
-});
-
-app.get("/healthz", (req, res) => {
-  res.status(200).send("OK");
-});
-
-
-/* =========================
-   LISTAR CURSOS
-========================= */
-
-app.post("/courses", async (req, res) => {
-  try {
-    let { title, price, modules, creatorId } = req.body;
-
-    console.log("BODY RECEBIDO:", req.body);
-
-    // 🔥 GARANTE QUE MODULES É ARRAY
-    if (typeof modules === "string") {
-      try {
-        modules = JSON.parse(modules);
-      } catch {
-        modules = [];
-      }
-    }
-
-    // 🔥 GARANTE QUE LESSONS É ARRAY
-    const safeModules = modules.map((m) => ({
-      title: m.title,
-      lessons: Array.isArray(m.lessons)
-        ? m.lessons
-        : typeof m.lessons === "string"
-        ? JSON.parse(m.lessons)
-        : []
-    }));
-
-    const newCourse = new Course({
-      title,
-      price,
-      modules: safeModules,
-      creatorId
-    });
-
-    await newCourse.save();
-
-    res.status(201).json(newCourse);
-
-  } catch (error) {
-    console.log("ERRO AO CRIAR CURSO:", error);
-    res.status(500).json({ error: "Erro ao criar curso" });
   }
 });
 
-/* =========================
-   BUSCAR CURSO POR ID
-========================= */
-
-app.get("/courses/:id", async (req, res) => {
-  try {
-
-    const course = await Course.findById(req.params.id);
-
-    if (!course) {
-      return res.status(404).json({
-        error: "Curso não encontrado"
-      });
-    }
-
-    res.json(course);
-
-  } catch (error) {
-
-    console.error(error);
-
-    res.status(500).json({
-      error: "Erro ao buscar curso"
-    });
-
-  }
-});
-
-
-app.delete("/courses/:id", async (req, res) => {
-  try {
-
-    await Course.findByIdAndDelete(req.params.id);
-
-    res.json({ message: "Curso deletado com sucesso" });
-
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Erro ao deletar curso" });
-  }
-});
-
-
-/* =========================
-   LISTAR AULAS DO CURSO
-========================= */
-
-app.get("/courses/:courseId/lessons", async (req, res) => {
-  try {
-
-    const lessons = await Lesson.find({
-      courseId: req.params.courseId
-    }).sort({ order: 1 });
-
-    res.json(lessons);
-
-  } catch (error) {
-
-    console.log(error);
-
-    res.status(500).json({
-      error: "Erro ao buscar aulas"
-    });
-
-  }
-});
-
-
-/* =========================
-   CRIAR AULA
-========================= */
-
-app.post("/lessons", async (req, res) => {
-  try {
-
-    const { courseId, title, videoUrl, order } = req.body;
-
-    const lesson = await Lesson.create({
-      courseId,
-      title,
-      videoUrl,
-      order
-    });
-
-    res.json(lesson);
-
-  } catch (error) {
-
-    console.log(error);
-
-    res.status(500).json({
-      error: "Erro ao criar aula"
-    });
-
-  }
-});
-
-
-/* =========================
-   LIVROS (BIBLIOTECA)
-========================= */
-
-// 📚 CRIAR LIVRO
-app.post("/books", async (req, res) => {
-  try {
-    const book = await Book.create(req.body);
-    res.json(book);
-  } catch (error) {
-    console.log(error);
-    res.status(500).json({
-      error: "Erro ao criar livro"
-    });
-  }
-});
-
-// 📚 LISTAR LIVROS
-app.get("/books", async (req, res) => {
-  try {
-    const books = await Book.find();
-    res.json(books);
-  } catch (error) {
-    console.log(error);
-    res.status(500).json({
-      error: "Erro ao buscar livros"
-    });
-  }
-});
-
-/* =========================
-   REGISTRO
-========================= */
-
-app.post("/register", async (req, res) => {
-
-  try {
-
-    const { name, email, password, role } = req.body;
-
-    const userExist = await User.findOne({ email });
-
-    if (userExist) {
-      return res.status(400).json({
-        error: "Usuário já existe"
-      });
-    }
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    const user = await User.create({
-      name,
-      email,
-      password: hashedPassword,
-      role: role || "aluno"
-    });
-
-    res.json({
-      message: "Usuário criado",
-      userId: user._id
-    });
-
-  } catch (error) {
-
-    console.error("ERRO REGISTER:", error);
-
-    res.status(500).json({
-      error: error.message
-    });
-
-  }
-
-});
-
-/* =========================
-   LOGIN
-========================= */
-
-app.post("/login", async (req, res) => {
-
-  try {
-
-    const { email, password } = req.body;
-
-    const user = await User.findOne({ email });
-
-    if (!user) {
-      return res.status(400).json({
-        error: "Usuário não encontrado"
-      });
-    }
-
-    const validPassword = await bcrypt.compare(password, user.password);
-
-    if (!validPassword) {
-      return res.status(400).json({
-        error: "Senha inválida"
-      });
-    }
-
-    const token = jwt.sign(
-  {
-    id: user._id,
-    name: user.name,
-    role: user.role
-  },
-  JWT_SECRET,
-  { expiresIn: "7d" }
-);
-
-    res.json({
-  token,
-  name: user.name,
-  userId: user._id,
-  role: user.role
-});
-
-  } catch (error) {
-
-    console.log(error);
-
-    res.status(500).json({
-      error: "Erro no login"
-    });
-
-  }
-
-});
-
-/* =========================
-   PAGAMENTO MERCADO PAGO
-========================= */
-
-app.post("/create-payment", async (req, res) => {
-
-  try {
-
-    const { title, price, userId, courseId } = req.body;
-
-    const preference = new Preference(client);
-
-const response = await preference.create({
-  body: {
-
-    items: [
-      {
-        title: title,
-        unit_price: Number(price),
-        quantity: 1
-      }
-    ],
-
-    metadata: {
-      userId: userId,
-      courseId: courseId
-    },
-
-    back_urls: {
-      success: `${process.env.FRONTEND_URL}/payment-success`,
-      failure: `${process.env.FRONTEND_URL}/payment-error`,
-      pending: `${process.env.FRONTEND_URL}/payment-pending`
-    },
-
-    auto_return: "approved",
-
-    notification_url:
-      "https://avivai-backend-production.up.railway.app/webhook/mercadopago"
-
-  }
-});
-
-    res.json({
-      id: response.id
-    });
-
-  } catch (error) {
-
-    console.log(error);
-
-    res.status(500).json({
-      error: "Erro ao criar pagamento"
-    });
-
-  }
-
-});
-
-/* =========================
-   MEUS CURSOS
-========================= */
-
-app.get("/my-courses/:userId", async (req, res) => {
-
-  try {
-
-    console.log("UserId recebido:", req.params.userId);
-
-    const purchases = await Purchase.find({
-      userId: req.params.userId
-    });
-
-    console.log("Compras encontradas:", purchases);
-
-    const courseIds = purchases.map(p => p.courseId);
-
-    const courses = await Course.find({
-      _id: { $in: courseIds }
-    });
-
-    res.json(courses);
-
-  } catch (error) {
-
-    console.log(error);
-
-    res.status(500).json({
-      error: "Erro ao buscar cursos"
-    });
-
-  }
-
-});
-
-/* =========================
-   VERIFICAR PAGAMENTO
-========================= */
-
+// =========================
+// VERIFY PAYMENT
+// =========================
 app.get("/verify-payment/:paymentId", async (req, res) => {
-
   try {
-
     const paymentId = req.params.paymentId;
 
     const response = await fetch(
@@ -656,210 +334,52 @@ app.get("/verify-payment/:paymentId", async (req, res) => {
     const payment = await response.json();
 
     if (payment.status === "approved") {
-
-      const userId = payment.metadata.userId;
-      const courseId = payment.metadata.courseId;
-
-      const exists = await Purchase.findOne({
-        paymentId
-      });
-
-      if (!exists) {
-
-        await Purchase.create({
-          userId,
-          courseId,
-          paymentId
-        });
-
-      }
-
-      return res.json({
-        success: true
-      });
-
+      return res.json({ success: true });
     }
 
-    res.json({
-      success: false
-    });
+    res.json({ success: false });
 
   } catch (error) {
-
-    console.log(error);
-
-    res.status(500).json({
-      error: "Erro ao verificar pagamento"
-    });
-
+    res.status(500).json({ error: "Erro ao verificar pagamento" });
   }
-
 });
 
+// =========================
+// MEUS CURSOS
+// =========================
+app.get("/my-courses/:userId", async (req, res) => {
+  const purchases = await Purchase.find({ userId: req.params.userId });
+  const courseIds = purchases.map(p => p.courseId);
 
-/* =========================
-   GERAR TOKEN DOWNLOAD
-========================= */
+  const courses = await Course.find({ _id: { $in: courseIds } });
 
-app.get("/download/:paymentId", async (req, res) => {
-
-  try {
-
-    const paymentId = req.params.paymentId;
-
-    const purchase = await Purchase.findOne({ paymentId });
-
-    if (!purchase) {
-      return res.status(403).json({
-        error: "Compra não encontrada"
-      });
-    }
-
-    const token = jwt.sign(
-      { paymentId },
-      process.env.JWT_SECRET,
-      { expiresIn: "10m" }
-    );
-
-    res.json({
-      downloadToken: token
-    });
-
-  } catch (error) {
-
-    console.log(error);
-
-    res.status(500).json({
-      error: "Erro ao gerar download"
-    });
-
-  }
-
+  res.json(courses);
 });
-/* =========================
-   GERAR CERTIFICADO
-========================= */
 
+// =========================
+// CERTIFICADO
+// =========================
 app.get("/certificate/:userId/:courseId", async (req, res) => {
+  const user = await User.findById(req.params.userId);
+  const course = await Course.findById(req.params.courseId);
 
-  try {
+  const doc = new PDFDocument({ size: "A5", layout: "landscape" });
 
-    const { userId, courseId } = req.params;
+  res.setHeader("Content-Type", "application/pdf");
+  doc.pipe(res);
 
-    const user = await User.findById(userId);
-    const course = await Course.findById(courseId);
+  doc.fontSize(30).text("CERTIFICADO", { align: "center" });
+  doc.moveDown();
+  doc.text(user.name, { align: "center" });
+  doc.moveDown();
+  doc.text(course.title, { align: "center" });
 
-    if (!user || !course) {
-      return res.status(404).json({
-        error: "Usuário ou curso não encontrado"
-      });
-    }
-
-    const doc = new PDFDocument({
-      size: "A5",
-      layout: "landscape"
-    });
-
-    res.setHeader(
-      "Content-Disposition",
-      `attachment; filename=certificado-${course.title}.pdf`
-    );
-
-    res.setHeader("Content-Type", "application/pdf");
-
-    doc.pipe(res);
-
-    doc.fontSize(40).text("CERTIFICADO", {
-      align: "center"
-    });
-
-    doc.moveDown();
-
-    doc.fontSize(20).text(
-      `Certificamos que`,
-      { align: "center" }
-    );
-
-    doc.moveDown();
-
-    doc.fontSize(30).text(
-      user.name,
-      { align: "center" }
-    );
-
-    doc.moveDown();
-
-    doc.fontSize(20).text(
-      `concluiu o curso`,
-      { align: "center" }
-    );
-
-    doc.moveDown();
-
-    doc.fontSize(25).text(
-      course.title,
-      { align: "center" }
-    );
-
-    doc.moveDown();
-
-    doc.fontSize(16).text(
-      `Data: ${new Date().toLocaleDateString()}`,
-      { align: "center" }
-    );
-
-    doc.end();
-
-  } catch (error) {
-
-    console.log(error);
-
-    res.status(500).json({
-      error: "Erro ao gerar certificado"
-    });
-
-  }
-
+  doc.end();
 });
 
-/* =========================
-   DOWNLOAD EBOOK PROTEGIDO
-========================= */
-
-app.get("/download-ebook/:paymentId", async (req, res) => {
-  try {
-
-    const paymentId = req.params.paymentId;
-
-    const purchase = await Purchase.findOne({ paymentId });
-
-    if (!purchase) {
-      return res.status(403).json({
-        error: "Compra não encontrada"
-      });
-    }
-
-    const filePath = path.join(process.cwd(), "storage", "ebook-intimidade.pdf");
-
-    res.download(filePath);
-
-  } catch (error) {
-
-    console.log(error);
-
-    res.status(500).json({
-      error: "Erro ao baixar ebook"
-    });
-
-  }
-
-});
-
-
-/* =========================
-   START SERVER
-========================= */
-
+// =========================
+// START
+// =========================
 app.listen(PORT, () => {
-  console.log(`🚀 API AVIVAI ONLINE NA PORTA ${PORT}`);
+  console.log("🚀 API rodando na porta", PORT);
 });
