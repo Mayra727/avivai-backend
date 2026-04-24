@@ -316,23 +316,45 @@ app.post("/courses", async (req, res) => {
    LISTAR CURSOS
 ========================= */
 
-app.get("/courses", async (req, res) => {
+app.post("/courses", async (req, res) => {
   try {
+    let { title, price, modules, creatorId } = req.body;
 
-    const { creatorId } = req.query;
+    console.log("BODY RECEBIDO:", req.body);
 
-    let filter = {};
-
-    if (creatorId) {
-      filter.creatorId = creatorId;
+    // 🔥 GARANTE QUE MODULES É ARRAY
+    if (typeof modules === "string") {
+      try {
+        modules = JSON.parse(modules);
+      } catch {
+        modules = [];
+      }
     }
 
-    const courses = await Course.find(filter);
+    // 🔥 GARANTE QUE LESSONS É ARRAY
+    const safeModules = modules.map((m) => ({
+      title: m.title,
+      lessons: Array.isArray(m.lessons)
+        ? m.lessons
+        : typeof m.lessons === "string"
+        ? JSON.parse(m.lessons)
+        : []
+    }));
 
-    res.json(courses);
+    const newCourse = new Course({
+      title,
+      price,
+      modules: safeModules,
+      creatorId
+    });
+
+    await newCourse.save();
+
+    res.status(201).json(newCourse);
 
   } catch (error) {
-    res.status(500).json({ error: "Erro ao buscar cursos" });
+    console.log("ERRO AO CRIAR CURSO:", error);
+    res.status(500).json({ error: "Erro ao criar curso" });
   }
 });
 
