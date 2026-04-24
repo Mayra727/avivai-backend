@@ -243,10 +243,26 @@ app.post("/courses", async (req, res) => {
 
     const { title, price, modules, creatorId } = req.body;
 
+    console.log("BODY RECEBIDO:", req.body); // 🔥 debug
+
+    const safeModules = Array.isArray(modules)
+      ? modules.map(module => ({
+          title: module.title || "",
+          lessons: Array.isArray(module.lessons)
+            ? module.lessons.map(lesson => ({
+                title: lesson.title || "",
+                type: lesson.type || "video",
+                content: lesson.content || "",
+                cover: lesson.cover || ""
+              }))
+            : []
+        }))
+      : [];
+
     const course = await Course.create({
       title,
       price: Number(price),
-      modules,
+      modules: safeModules, // 🔥 agora seguro
       creatorId
     });
 
@@ -254,7 +270,7 @@ app.post("/courses", async (req, res) => {
 
   } catch (error) {
 
-    console.log(error);
+    console.log("ERRO AO CRIAR CURSO:", error);
 
     res.status(500).json({
       error: "Erro ao criar curso"
@@ -262,7 +278,6 @@ app.post("/courses", async (req, res) => {
 
   }
 });
-
 
 /* =========================
    LISTAR CURSOS
