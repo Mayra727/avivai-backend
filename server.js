@@ -12,16 +12,32 @@ import fs from "fs";
 
 dotenv.config();
 
+/* =========================
+   VARIÁVEIS (MOVER PRA CIMA)
+========================= */
+
+const PORT = process.env.PORT || 8080;
+const MONGO_URI = process.env.MONGO_URI;
+const JWT_SECRET = process.env.JWT_SECRET || "avivai_secret"; // 🔥 AQUI PRIMEIRO
+
 console.log("MP TOKEN:", process.env.MP_ACCESS_TOKEN);
 
 const client = new MercadoPagoConfig({
   accessToken: process.env.MP_ACCESS_TOKEN
 });
 
+/* =========================
+   APP
+========================= */
+
 const app = express();
 
 app.use(cors());
 app.use(express.json());
+
+/* =========================
+   ROTA /ME (AGORA CORRETA)
+========================= */
 
 app.get("/me", (req, res) => {
 
@@ -48,14 +64,6 @@ app.get("/me", (req, res) => {
   }
 
 });
-
-/* =========================
-   VARIÁVEIS
-========================= */
-
-const PORT = process.env.PORT || 8080;
-const MONGO_URI = process.env.MONGO_URI;
-const JWT_SECRET = process.env.JWT_SECRET || "avivai_secret";
 
 /* =========================
    CONEXÃO MONGODB
@@ -527,10 +535,14 @@ app.post("/login", async (req, res) => {
     }
 
     const token = jwt.sign(
-      { id: user._id },
-      JWT_SECRET,
-      { expiresIn: "7d" }
-    );
+  {
+    id: user._id,
+    name: user.name,
+    role: user.role
+  },
+  JWT_SECRET,
+  { expiresIn: "7d" }
+);
 
     res.json({
   token,
