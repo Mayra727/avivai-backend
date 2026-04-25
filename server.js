@@ -54,7 +54,7 @@ const User = mongoose.model("User", new mongoose.Schema({
   }
 }));
 
-const Course = mongoose.model("Course", new mongoose.Schema({
+const Course = mongoose.models.Course || mongoose.model("Course", new mongoose.Schema({
   title: String,
   price: { type: Number, default: 0 },
   modules: [
