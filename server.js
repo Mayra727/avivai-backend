@@ -92,23 +92,45 @@ app.post("/courses", async (req, res) => {
 
     const safeModules = modules.map((m) => {
 
-  // 🔥 SEMPRE COMEÇA LIMPO
-  let lessons = [];
+  let safeLessons = [];
 
-  // 🔥 só aceita array válido
   if (Array.isArray(m.lessons)) {
-    lessons = m.lessons;
-  }
 
-  // 🔥 limpa completamente qualquer lixo
-  const safeLessons = lessons
-    .filter(l => typeof l === "object" && l !== null)
-    .map(l => ({
-      title: l.title || "",
-      type: l.type || "video",
-      content: l.content || "",
-      cover: l.cover || ""
-    }));
+    safeLessons = m.lessons
+      .map((l) => {
+
+        // 💣 CASO REAL: lesson veio como string "[ { ... } ]"
+        if (typeof l === "string") {
+          console.log("🚨 STRING DETECTADA NA LESSON:", l);
+
+          try {
+            const parsed = JSON.parse(l);
+
+            if (Array.isArray(parsed)) {
+              return parsed[0]; // pega o objeto dentro
+            }
+
+            return parsed;
+
+          } catch {
+            return null;
+          }
+        }
+
+        // 🔥 se não for objeto válido
+        if (!l || typeof l !== "object") {
+          return null;
+        }
+
+        return {
+          title: l.title || "",
+          type: l.type || "video",
+          content: l.content || "",
+          cover: l.cover || ""
+        };
+      })
+      .filter(Boolean);
+  }
 
   return {
     title: m.title || "",
