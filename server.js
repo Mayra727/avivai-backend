@@ -32,6 +32,8 @@ mongoose.connect(MONGO_URI)
 // =========================
 // MODELS
 // =========================
+delete mongoose.models.Course;
+
 const Course = mongoose.model("Course", new mongoose.Schema({
   title: String,
   price: { type: Number, default: 0 },
