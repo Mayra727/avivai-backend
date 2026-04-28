@@ -32,7 +32,7 @@ mongoose.connect(MONGO_URI)
 // =========================
 // MODELS
 // =========================
-const Course = mongoose.models.Course || mongoose.model("Course", new mongoose.Schema({
+const Course = mongoose.model("Course", new mongoose.Schema({
   title: String,
   price: { type: Number, default: 0 },
   modules: [
@@ -90,35 +90,31 @@ app.post("/courses", async (req, res) => {
   try {
     let { title, price, modules, creatorId } = req.body;
 
-    // 🔥 GARANTE ARRAY
-    if (!Array.isArray(modules)) modules = [];
-
     const safeModules = modules.map((m) => {
 
-      let lessons = m.lessons;
+  // 🔥 SEMPRE COMEÇA LIMPO
+  let lessons = [];
 
-      // 🔥 REMOVE STRING (CAUSA DO BUG)
-      if (typeof lessons === "string") {
-        console.log("🚨 LESSONS STRING IGNORADO");
-        lessons = [];
-      }
+  // 🔥 só aceita array válido
+  if (Array.isArray(m.lessons)) {
+    lessons = m.lessons;
+  }
 
-      if (!Array.isArray(lessons)) lessons = [];
+  // 🔥 limpa completamente qualquer lixo
+  const safeLessons = lessons
+    .filter(l => typeof l === "object" && l !== null)
+    .map(l => ({
+      title: l.title || "",
+      type: l.type || "video",
+      content: l.content || "",
+      cover: l.cover || ""
+    }));
 
-      const safeLessons = lessons
-        .filter(l => typeof l === "object") // 🔥 remove lixo
-        .map(l => ({
-          title: l.title || "",
-          type: l.type || "video",
-          content: l.content || "",
-          cover: l.cover || ""
-        }));
-
-      return {
-        title: m.title || "",
-        lessons: safeLessons
-      };
-    });
+  return {
+    title: m.title || "",
+    lessons: safeLessons
+  };
+});
 
     const course = await Course.create({
       title: title || "",
