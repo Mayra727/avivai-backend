@@ -199,22 +199,59 @@ app.post("/register", async (req, res) => {
 // =========================
 // LOGIN
 // =========================
+
 app.post("/login", async (req, res) => {
-  const { email, password } = req.body;
 
-  const user = await User.findOne({ email });
-  if (!user) return res.status(400).json({ error: "Não encontrado" });
+  try {
 
-  const valid = await bcrypt.compare(password, user.password);
-  if (!valid) return res.status(400).json({ error: "Senha inválida" });
+    let { email, password } = req.body;
 
-  const token = jwt.sign({
-    id: user._id,
-    name: user.name,
-    role: user.role
-  }, JWT_SECRET);
+    // 🔥 limpa email
+    email = email.trim().toLowerCase();
 
-  res.json({ token, user });
+    console.log("EMAIL RECEBIDO:", email);
+
+    const user = await User.findOne({
+      email: {
+        $regex: new RegExp(`^${email}$`, "i")
+      }
+    });
+
+    console.log("USER ENCONTRADO:", user);
+
+    if (!user) {
+      return res.status(400).json({
+        error: "Não encontrado"
+      });
+    }
+
+    const valid = await bcrypt.compare(password, user.password);
+
+    if (!valid) {
+      return res.status(400).json({
+        error: "Senha inválida"
+      });
+    }
+
+    const token = jwt.sign({
+      id: user._id,
+      name: user.name,
+      role: user.role
+    }, JWT_SECRET);
+
+    res.json({
+      token,
+      user
+    });
+
+  } catch (error) {
+
+    console.log("ERRO LOGIN:", error);
+
+    res.status(500).json({
+      error: "Erro no login"
+    });
+  }
 });
 
 // =========================
