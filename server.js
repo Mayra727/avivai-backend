@@ -54,6 +54,11 @@ const Course = mongoose.model("Course", new mongoose.Schema({
   createdAt: { type: Date, default: Date.now }
 }));
 
+console.log(
+  "SCHEMA LESSONS:",
+  Course.schema.path("modules").schema.path("lessons")
+);
+
 const User = mongoose.model("User", new mongoose.Schema({
   name: String,
   email: { type: String, unique: true },
