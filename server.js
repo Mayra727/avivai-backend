@@ -95,56 +95,71 @@ app.post("/courses", async (req, res) => {
   console.log("BODY:", req.body);
 
   try {
+
     let { title, price, modules, creatorId } = req.body;
 
+    // 🔥 garante array
+    if (!Array.isArray(modules)) {
+      modules = [];
+    }
+
+    // 🔥 limpa módulos
     const safeModules = modules.map((m) => {
 
-  let safeLessons = [];
+      let lessons = [];
 
-  if (Array.isArray(m.lessons)) {
+      // 🔥 só aceita array
+      if (Array.isArray(m.lessons)) {
+        lessons = m.lessons;
+      }
 
-    safeLessons = m.lessons
-      .map((l) => {
+      const safeLessons = [];
 
-        // 💣 CASO REAL: lesson veio como string "[ { ... } ]"
-        if (typeof l === "string") {
-          console.log("🚨 STRING DETECTADA NA LESSON:", l);
+      for (const l of lessons) {
+
+        let lesson = l;
+
+        // 💣 se lesson vier string
+        if (typeof lesson === "string") {
+
+          console.log("🚨 LESSON STRING:", lesson);
 
           try {
-            const parsed = JSON.parse(l);
 
-            if (Array.isArray(parsed)) {
-              return parsed[0]; // pega o objeto dentro
+            lesson = JSON.parse(lesson);
+
+            // 🔥 se virar array
+            if (Array.isArray(lesson)) {
+              lesson = lesson[0];
             }
 
-            return parsed;
-
           } catch {
-            return null;
+
+            console.log("❌ STRING INVÁLIDA IGNORADA");
+            continue;
           }
         }
 
-        // 🔥 se não for objeto válido
-        if (!l || typeof l !== "object") {
-          return null;
+        // 🔥 garante objeto
+        if (!lesson || typeof lesson !== "object") {
+          continue;
         }
 
-        return {
-          title: l.title || "",
-          type: l.type || "video",
-          content: l.content || "",
-          cover: l.cover || ""
-        };
-      })
-      .filter(Boolean);
-  }
+        safeLessons.push({
+          title: lesson.title || "",
+          type: lesson.type || "video",
+          content: lesson.content || "",
+          cover: lesson.cover || ""
+        });
+      }
 
-  return {
-    title: m.title || "",
-    lessons: safeLessons
-  };
-});
+      return {
+        title: m.title || "",
+        lessons: safeLessons
+      };
+    });
 
+    // 🔥 cria curso
     const course = await Course.create({
       title: title || "",
       price: Number(price) || 0,
@@ -155,8 +170,12 @@ app.post("/courses", async (req, res) => {
     res.status(201).json(course);
 
   } catch (error) {
+
     console.log("❌ ERRO:", error);
-    res.status(500).json({ error: "Erro ao criar curso" });
+
+    res.status(500).json({
+      error: "Erro ao criar curso"
+    });
   }
 });
 
