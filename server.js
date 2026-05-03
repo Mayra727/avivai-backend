@@ -32,27 +32,42 @@ mongoose.connect(MONGO_URI)
 // =========================
 // MODELS
 // =========================
+
+const LessonSchema = new mongoose.Schema({
+  title: String,
+  type: String,
+  content: String,
+  cover: String
+});
+
+const ModuleSchema = new mongoose.Schema({
+  title: String,
+  lessons: [LessonSchema]
+});
+
+const CourseSchema = new mongoose.Schema({
+  title: String,
+
+  price: {
+    type: Number,
+    default: 0
+  },
+
+  modules: [ModuleSchema],
+
+  creatorId: String,
+
+  createdAt: {
+    type: Date,
+    default: Date.now
+  }
+});
+
 delete mongoose.models.Course;
 
-const Course = mongoose.model("Course", new mongoose.Schema({
-  title: String,
-  price: { type: Number, default: 0 },
-  modules: [
-    {
-      title: String,
-      lessons: [
-        {
-          title: String,
-          type: String,
-          content: String,
-          cover: String
-        }
-      ]
-    }
-  ],
-  creatorId: String,
-  createdAt: { type: Date, default: Date.now }
-}));
+const Course =
+  mongoose.models.Course ||
+  mongoose.model("Course", CourseSchema);
 
 console.log(
   "🔥 SCHEMA REAL:",
