@@ -93,6 +93,15 @@ app.post("/courses", async (req, res) => {
 
   console.log("🔥 BACKEND ATIVO");
   console.log("BODY:", req.body);
+  console.log(
+  "🔥 TYPE LESSON:",
+  typeof req.body.modules?.[0]?.lessons?.[0]
+);
+
+console.log(
+  "🔥 VALUE LESSON:",
+  req.body.modules?.[0]?.lessons?.[0]
+);
 
   try {
 
