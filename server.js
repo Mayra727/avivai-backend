@@ -55,8 +55,8 @@ const Course = mongoose.model("Course", new mongoose.Schema({
 }));
 
 console.log(
-  "SCHEMA LESSONS:",
-  Course.schema.path("modules").schema.path("lessons")
+  "🔥 SCHEMA REAL:",
+  Course.schema.obj.modules[0].lessons
 );
 
 const User = mongoose.model("User", new mongoose.Schema({
