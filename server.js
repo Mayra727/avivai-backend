@@ -101,6 +101,26 @@ app.get("/me", (req, res) => {
   }
 });
 
+app.get("/producer-courses/:creatorId", async (req, res) => {
+
+  try {
+
+    const courses = await Course.find({
+      creatorId: req.params.creatorId
+    });
+
+    res.json(courses);
+
+  } catch (error) {
+
+    console.log(error);
+
+    res.status(500).json({
+      error: "Erro ao buscar cursos"
+    });
+  }
+});
+
 // =========================
 // 🔥 CRIAR CURSO (BLINDADO)
 // =========================
