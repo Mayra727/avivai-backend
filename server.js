@@ -69,10 +69,6 @@ const Course =
   mongoose.models.Course ||
   mongoose.model("Course", CourseSchema);
 
-console.log(
-  "🔥 SCHEMA REAL:",
-  Course.schema.obj.modules[0].lessons
-);
 
 const User = mongoose.model("User", new mongoose.Schema({
   name: String,
