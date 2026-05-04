@@ -318,6 +318,52 @@ app.post("/login", async (req, res) => {
 });
 
 // =========================
+// CHECK ACCESS
+// =========================
+
+app.get("/check-access/:userId/:courseId", async (req, res) => {
+
+  try {
+
+    const { userId, courseId } = req.params;
+
+    // 🔥 procura curso
+    const course = await Course.findById(courseId);
+
+    // 🔥 curso não existe
+    if (!course) {
+
+      return res.json({
+        allowed: false
+      });
+
+    }
+
+    // 🔥 produtor pode acessar
+    if (course.creatorId === userId) {
+
+      return res.json({
+        allowed: true
+      });
+
+    }
+
+    // 🔥 libera temporariamente
+    return res.json({
+      allowed: true
+    });
+
+  } catch (error) {
+
+    console.log(error);
+
+    res.status(500).json({
+      allowed: false
+    });
+  }
+});
+
+// =========================
 // START
 // =========================
 app.listen(PORT, () => {
