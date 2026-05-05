@@ -11,6 +11,20 @@ import fetch from "node-fetch";
 
 dotenv.config();
 
+const multer = require("multer");
+
+const { v2: cloudinary } = require("cloudinary");
+
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_NAME,
+  api_key: process.env.CLOUDINARY_KEY,
+  api_secret: process.env.CLOUDINARY_SECRET,
+});
+
+const upload = multer({
+  dest: "uploads/"
+});
+
 // =========================
 // CONFIG
 // =========================
@@ -116,6 +130,36 @@ app.get("/producer-courses/:creatorId", async (req, res) => {
     });
   }
 });
+
+app.post(
+  "/upload-video",
+  upload.single("video"),
+  async (req, res) => {
+
+    try {
+
+      const result = await cloudinary.uploader.upload(
+        req.file.path,
+        {
+          resource_type: "video",
+          folder: "courses/videos"
+        }
+      );
+
+      res.json({
+        url: result.secure_url
+      });
+
+    } catch (error) {
+
+      console.log(error);
+
+      res.status(500).json({
+        error: "Erro upload vídeo"
+      });
+    }
+  }
+);
 
 // =========================
 // 🔥 CRIAR CURSO (BLINDADO)
