@@ -359,6 +359,28 @@ app.get("/check-access/:userId/:courseId", async (req, res) => {
   }
 });
 
+app.delete("/courses/:id", async (req, res) => {
+
+  try {
+
+    await Course.findByIdAndDelete(
+      req.params.id
+    );
+
+    res.json({
+      success: true
+    });
+
+  } catch (error) {
+
+    console.log(error);
+
+    res.status(500).json({
+      error: "Erro ao excluir curso"
+    });
+  }
+});
+
 // =========================
 // START
 // =========================
