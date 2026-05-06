@@ -8,13 +8,12 @@ import mongoose from "mongoose";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import fetch from "node-fetch";
-import dotenv from "dotenv";
-
-dotenv.config();
 
 import multer from "multer";
 
 import { v2 as cloudinary } from "cloudinary";
+
+dotenv.config();
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
