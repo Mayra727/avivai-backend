@@ -8,6 +8,7 @@ import mongoose from "mongoose";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import fetch from "node-fetch";
+import dotenv from "dotenv";
 
 dotenv.config();
 
@@ -20,6 +21,10 @@ cloudinary.config({
   api_key: process.env.CLOUDINARY_KEY,
   api_secret: process.env.CLOUDINARY_SECRET,
 });
+
+console.log("🔥 CLOUD:", process.env.CLOUDINARY_CLOUD_NAME);
+console.log("🔥 KEY:", process.env.CLOUDINARY_API_KEY);
+console.log("🔥 SECRET:", process.env.CLOUDINARY_API_SECRET);
 
 const upload = multer({
   dest: "uploads/"
