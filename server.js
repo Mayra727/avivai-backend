@@ -26,7 +26,9 @@ console.log("🔥 KEY:", process.env.CLOUDINARY_API_KEY);
 console.log("🔥 SECRET:", process.env.CLOUDINARY_API_SECRET);
 
 const upload = multer({
-  dest: "uploads/"
+  limits: {
+    fileSize: 200 * 1024 * 1024
+  }
 });
 
 // =========================
@@ -34,7 +36,14 @@ const upload = multer({
 // =========================
 const app = express();
 app.use(cors());
-app.use(express.json());
+app.use(express.json({
+  limit: "200mb"
+}));
+
+app.use(express.urlencoded({
+  extended: true,
+  limit: "200mb"
+}));
 
 const PORT = process.env.PORT || 8080;
 const MONGO_URI = process.env.MONGO_URI;
