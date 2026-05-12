@@ -8,6 +8,7 @@ import mongoose from "mongoose";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import fetch from "node-fetch";
+import Progress from "./models/Progress.js";
 
 import multer from "multer";
 
@@ -277,19 +278,95 @@ console.log(
 });
 
 // =========================
+// SALVAR PROGRESSO
+// =========================
+
+app.post(
+  "/progress",
+  async (req, res) => {
+
+    try {
+
+      const {
+        userId,
+        courseId,
+        lessonId,
+        completed
+      } = req.body;
+
+      const progress =
+        await Progress.findOneAndUpdate(
+
+          {
+            userId,
+            courseId,
+            lessonId
+          },
+
+          {
+            completed
+          },
+
+          {
+            upsert: true,
+            new: true
+          }
+        );
+
+      res.json(progress);
+
+    } catch (error) {
+
+      console.log(error);
+
+      res.status(500).json({
+        error: "Erro ao salvar progresso"
+      });
+    }
+  }
+);
+
+// =========================
+// BUSCAR PROGRESSO
+// =========================
+
+app.get(
+  "/progress/:userId/:courseId",
+
+  async (req, res) => {
+
+    try {
+
+      const {
+        userId,
+        courseId
+      } = req.params;
+
+      const progress =
+        await Progress.find({
+          userId,
+          courseId
+        });
+
+      res.json(progress);
+
+    } catch (error) {
+
+      console.log(error);
+
+      res.status(500).json({
+        error: "Erro ao buscar progresso"
+      });
+    }
+  }
+);
+
+// =========================
 // GET CURSO
 // =========================
 app.get("/courses/:id", async (req, res) => {
   const course = await Course.findById(req.params.id);
   res.json(course);
-});
-
-// =========================
-// DELETE
-// =========================
-app.delete("/courses/:id", async (req, res) => {
-  await Course.findByIdAndDelete(req.params.id);
-  res.json({ ok: true });
 });
 
 // =========================
@@ -415,6 +492,10 @@ app.get("/check-access/:userId/:courseId", async (req, res) => {
     });
   }
 });
+
+// =========================
+// DELETE
+// =========================
 
 app.delete("/courses/:id", async (req, res) => {
 
