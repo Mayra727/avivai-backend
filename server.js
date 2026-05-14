@@ -277,6 +277,55 @@ console.log(
   }
 });
 
+app.post(
+"/grant-access",
+
+async(req,res)=>{
+
+try{
+
+const {
+userId,
+courseId
+}=req.body;
+
+const exists =
+await Purchase.findOne({
+userId,
+courseId
+});
+
+if(exists){
+
+return res.json({
+success:true
+});
+
+}
+
+await Purchase.create({
+
+userId,
+courseId
+
+});
+
+res.json({
+success:true
+});
+
+}catch(error){
+
+console.log(error);
+
+res.status(500).json({
+error:"Erro"
+});
+
+}
+
+});
+
 // =========================
 // SALVAR PROGRESSO
 // =========================
