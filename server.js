@@ -422,20 +422,71 @@ app.get("/courses/:id", async (req, res) => {
 // REGISTER
 // =========================
 app.post("/register", async (req, res) => {
-  const { name, email, password } = req.body;
 
-  const exists = await User.findOne({ email });
-  if (exists) return res.status(400).json({ error: "Já existe" });
+  try {
 
-  const hashed = await bcrypt.hash(password, 10);
+    let {
+      name,
+      email,
+      password
+    } = req.body;
 
-  const user = await User.create({
-    name,
-    email,
-    password: hashed
-  });
+    // 🔥 limpa email
 
-  res.json(user);
+    email =
+      email.trim().toLowerCase();
+
+    const exists =
+      await User.findOne({
+        email
+      });
+
+    if (exists) {
+
+      return res.status(400).json({
+        error: "Já existe"
+      });
+
+    }
+
+    const hashed =
+      await bcrypt.hash(
+        password,
+        10
+      );
+
+    const user =
+      await User.create({
+
+        name,
+
+        email,
+
+        password: hashed
+
+      });
+
+    console.log(
+      "✅ USUÁRIO CRIADO:",
+      user.email
+    );
+
+    res.json(user);
+
+  } catch (error) {
+
+    console.log(
+      "❌ ERRO REGISTER:",
+      error
+    );
+
+    res.status(500).json({
+      error:
+        "Erro ao cadastrar"
+    });
+
+  }
+
 });
 
 // =========================
