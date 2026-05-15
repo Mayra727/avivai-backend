@@ -643,17 +643,52 @@ const resetLink =
 
 `https://avivai-frontend.vercel.app/reset-password/${resetToken}`;
 
-await transporter.sendMail({
+const resetLink =
 
-from:
-'"Avivai" <contato@avivai.com>',
+`https://avivai-frontend.vercel.app/reset-password/${resetToken}`;
 
-to:user.email,
+await fetch(
+
+"https://api.brevo.com/v3/smtp/email",
+
+{
+
+method:"POST",
+
+headers:{
+
+"accept":"application/json",
+
+"api-key":
+process.env.BREVO_API_KEY,
+
+"content-type":
+"application/json"
+
+},
+
+body:JSON.stringify({
+
+sender:{
+
+name:"Avivai",
+
+email:"contato@avivai.com"
+
+},
+
+to:[
+
+{
+email:user.email
+}
+
+],
 
 subject:
 "Recuperação de senha",
 
-html:`
+htmlContent:`
 
 <div
 style="
@@ -667,8 +702,8 @@ Recuperação de senha
 </h2>
 
 <p>
-Clique no botão abaixo
-para criar uma nova senha:
+Clique abaixo para
+criar uma nova senha:
 </p>
 
 <a
@@ -691,28 +726,18 @@ Redefinir senha
 
 </a>
 
-<p
-style="
-margin-top:20px;
-font-size:12px;
-color:gray;
-"
->
-
-Esse link expira em
-30 minutos.
-
-</p>
-
 </div>
 
 `
 
-});
+})
+
+}
+
+);
 
 console.log(
-"📧 EMAIL ENVIADO:",
-user.email
+"📧 EMAIL ENVIADO"
 );
 
 res.json({
