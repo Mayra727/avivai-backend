@@ -371,6 +371,53 @@ error:"Erro"
 });
 
 // =========================
+// MEUS CURSOS
+// =========================
+
+app.get(
+"/my-courses/:userId",
+
+async(req,res)=>{
+
+try{
+
+const purchases =
+await Purchase.find({
+
+userId:
+req.params.userId
+
+});
+
+const courseIds =
+purchases.map(
+(p)=>p.courseId
+);
+
+const courses =
+await Course.find({
+
+_id:{
+$in:courseIds
+}
+
+});
+
+res.json(courses);
+
+}catch(error){
+
+console.log(error);
+
+res.status(500).json({
+error:"Erro"
+});
+
+}
+
+});
+
+// =========================
 // SALVAR PROGRESSO
 // =========================
 
