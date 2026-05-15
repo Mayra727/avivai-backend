@@ -643,10 +643,6 @@ const resetLink =
 
 `https://avivai-frontend.vercel.app/reset-password/${resetToken}`;
 
-const resetLink =
-
-`https://avivai-frontend.vercel.app/reset-password/${resetToken}`;
-
 await fetch(
 
 "https://api.brevo.com/v3/smtp/email",
@@ -673,7 +669,7 @@ sender:{
 
 name:"Avivai",
 
-email:"contato@avivai.com"
+email:"mayracarol727@gmail.com"
 
 },
 
