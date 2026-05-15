@@ -635,6 +635,76 @@ error:"Erro servidor"
 });
 
 // =========================
+// RESET PASSWORD
+// =========================
+
+app.post(
+"/reset-password",
+
+async(req,res)=>{
+
+try{
+
+const {
+token,
+password
+} = req.body;
+
+const user =
+await User.findOne({
+
+resetToken: token,
+
+resetTokenExpires:{
+$gt: Date.now()
+}
+
+});
+
+if(!user){
+
+return res.status(400).json({
+error:"Token inválido ou expirado"
+});
+
+}
+
+const hashed =
+await bcrypt.hash(
+password,
+10
+);
+
+user.password =
+hashed;
+
+// 🔥 limpa token
+
+user.resetToken =
+undefined;
+
+user.resetTokenExpires =
+undefined;
+
+await user.save();
+
+res.json({
+success:true
+});
+
+}catch(error){
+
+console.log(error);
+
+res.status(500).json({
+error:"Erro servidor"
+});
+
+}
+
+});
+
+// =========================
 // CHECK ACCESS
 // =========================
 
