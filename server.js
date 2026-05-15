@@ -17,17 +17,18 @@ from "nodemailer";
 
 import { v2 as cloudinary } from "cloudinary";
 
+dotenv.config();
+
 const transporter =
 nodemailer.createTransport({
 
-host:
-"smtp-relay.brevo.com",
+service:"Brevo",
 
-port:2525,
+host:"smtp-relay.brevo.com",
 
-secure:false,
+port:465,
 
-requireTLS:true,
+secure:true,
 
 auth:{
 
@@ -37,10 +38,6 @@ process.env.SMTP_USER,
 pass:
 process.env.SMTP_PASS
 
-},
-
-tls:{
-rejectUnauthorized:false
 }
 
 });
