@@ -99,14 +99,32 @@ const Course =
 
 
 const User = mongoose.model("User", new mongoose.Schema({
+
   name: String,
-  email: { type: String, unique: true },
+
+  email: {
+    type: String,
+    unique: true
+  },
+
   password: String,
+
   role: {
     type: String,
-    enum: ["superadmin", "produtor", "aluno"],
+    enum: [
+      "superadmin",
+      "produtor",
+      "aluno"
+    ],
     default: "aluno"
-  }
+  },
+
+  // 🔥 recuperação senha
+
+  resetToken: String,
+
+  resetTokenExpires: Date
+
 }));
 
 // =========================
@@ -545,6 +563,75 @@ app.post("/login", async (req, res) => {
       error: "Erro no login"
     });
   }
+});
+
+// =========================
+// FORGOT PASSWORD
+// =========================
+
+app.post(
+"/forgot-password",
+
+async(req,res)=>{
+
+try{
+
+const { email } =
+req.body;
+
+const user =
+await User.findOne({
+
+email:
+email.trim().toLowerCase()
+
+});
+
+if(!user){
+
+return res.status(404).json({
+error:"Usuário não encontrado"
+});
+
+}
+
+// 🔥 gera token simples
+
+const resetToken =
+Math.random()
+.toString(36)
+.substring(2);
+
+user.resetToken =
+resetToken;
+
+user.resetTokenExpires =
+Date.now() +
+1000 * 60 * 30;
+
+// 30 minutos
+
+await user.save();
+
+console.log(
+"🔑 TOKEN:",
+resetToken
+);
+
+res.json({
+success:true
+});
+
+}catch(error){
+
+console.log(error);
+
+res.status(500).json({
+error:"Erro servidor"
+});
+
+}
+
 });
 
 // =========================
