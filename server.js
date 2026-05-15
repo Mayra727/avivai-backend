@@ -12,9 +12,35 @@ import Progress from "./models/Progress.js";
 
 import multer from "multer";
 
+import nodemailer
+from "nodemailer";
+
 import { v2 as cloudinary } from "cloudinary";
 
 dotenv.config();
+
+const transporter =
+nodemailer.createTransport({
+
+host:
+process.env.SMTP_HOST,
+
+port:
+process.env.SMTP_PORT,
+
+secure:false,
+
+auth:{
+
+user:
+process.env.SMTP_USER,
+
+pass:
+process.env.SMTP_PASS
+
+}
+
+});
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -613,9 +639,80 @@ Date.now() +
 
 await user.save();
 
+const resetLink =
+
+`https://avivai-frontend.vercel.app/reset-password/${resetToken}`;
+
+await transporter.sendMail({
+
+from:
+'"Avivai" <contato@avivai.com>',
+
+to:user.email,
+
+subject:
+"Recuperação de senha",
+
+html:`
+
+<div
+style="
+font-family:Arial;
+padding:20px;
+"
+>
+
+<h2>
+Recuperação de senha
+</h2>
+
+<p>
+Clique no botão abaixo
+para criar uma nova senha:
+</p>
+
+<a
+
+href="${resetLink}"
+
+style="
+display:inline-block;
+padding:12px 20px;
+background:#7A4A3A;
+color:white;
+text-decoration:none;
+border-radius:8px;
+margin-top:20px;
+"
+
+>
+
+Redefinir senha
+
+</a>
+
+<p
+style="
+margin-top:20px;
+font-size:12px;
+color:gray;
+"
+>
+
+Esse link expira em
+30 minutos.
+
+</p>
+
+</div>
+
+`
+
+});
+
 console.log(
-"🔑 TOKEN:",
-resetToken
+"📧 EMAIL ENVIADO:",
+user.email
 );
 
 res.json({
