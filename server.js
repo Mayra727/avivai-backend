@@ -220,6 +220,34 @@ app.post(
 );
 
 // =========================
+// LISTAR CURSOS
+// =========================
+
+app.get(
+"/courses",
+
+async(req,res)=>{
+
+try{
+
+const courses =
+await Course.find();
+
+res.json(courses);
+
+}catch(error){
+
+console.log(error);
+
+res.status(500).json({
+error:"Erro ao buscar cursos"
+});
+
+}
+
+});
+
+// =========================
 // 🔥 CRIAR CURSO (BLINDADO)
 // =========================
 app.post("/courses", async (req, res) => {
@@ -416,6 +444,7 @@ error:"Erro"
 }
 
 });
+
 
 // =========================
 // SALVAR PROGRESSO
