@@ -907,46 +907,76 @@ error:"Erro servidor"
 // CHECK ACCESS
 // =========================
 
-app.get("/check-access/:userId/:courseId", async (req, res) => {
+app.get(
+"/check-access/:userId/:courseId",
 
-  try {
+async(req,res)=>{
 
-    const { userId, courseId } = req.params;
+try{
 
-    // 🔥 procura curso
-    const course = await Course.findById(courseId);
+const {
+userId,
+courseId
+}=req.params;
 
-    // 🔥 curso não existe
-    if (!course) {
+// 🔥 curso existe?
+const course =
+await Course.findById(
+courseId
+);
 
-      return res.json({
-        allowed: false
-      });
+if(!course){
 
-    }
+return res.json({
+hasAccess:false
+});
 
-    // 🔥 produtor pode acessar
-    if (course.creatorId === userId) {
+}
 
-      return res.json({
-        allowed: true
-      });
+// 🔥 produtor dono
+if(
+course.creatorId === userId
+){
 
-    }
+return res.json({
+hasAccess:true
+});
 
-    // 🔥 libera temporariamente
-    return res.json({
-      allowed: true
-    });
+}
 
-  } catch (error) {
+// 🔥 compra
+const purchase =
+await Purchase.findOne({
 
-    console.log(error);
+userId,
+courseId
 
-    res.status(500).json({
-      allowed: false
-    });
-  }
+});
+
+// 🔥 acesso liberado
+if(purchase){
+
+return res.json({
+hasAccess:true
+});
+
+}
+
+// 🔥 bloqueado
+return res.json({
+hasAccess:false
+});
+
+}catch(error){
+
+console.log(error);
+
+res.status(500).json({
+hasAccess:false
+});
+
+}
+
 });
 
 // =========================
