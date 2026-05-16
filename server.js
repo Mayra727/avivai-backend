@@ -102,6 +102,11 @@ const ModuleSchema = new mongoose.Schema({
 const CourseSchema = new mongoose.Schema({
   title: String,
 
+type: {
+  type: String,
+  default: "curso"
+},
+
   price: {
     type: Number,
     default: 0
