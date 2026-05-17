@@ -128,6 +128,25 @@ const Course =
   mongoose.models.Course ||
   mongoose.model("Course", CourseSchema);
 
+  const Purchase = mongoose.model(
+
+"Purchase",
+
+new mongoose.Schema({
+
+  userId:String,
+
+  courseId:String,
+
+  createdAt:{
+    type:Date,
+    default:Date.now
+  }
+
+})
+
+);
+
 
 const User = mongoose.model("User", new mongoose.Schema({
 
@@ -397,6 +416,104 @@ console.log(error);
 
 res.status(500).json({
 error:"Erro"
+});
+
+}
+
+});
+
+// =========================
+// CREATE CHECKOUT
+// =========================
+
+app.post(
+
+"/create-checkout",
+
+async(req,res)=>{
+
+try{
+
+const {
+courseId,
+userId
+}=req.body;
+
+// 🔥 busca curso
+const course =
+await Course.findById(
+courseId
+);
+
+if(!course){
+
+return res.status(404).json({
+error:"Curso não encontrado"
+});
+
+}
+
+// 🔥 cria checkout InfinitePay
+const response =
+await fetch(
+
+"https://api.checkout.infinitepay.io/links",
+
+{
+
+method:"POST",
+
+headers:{
+
+"Content-Type":
+"application/json",
+
+"Authorization":
+"Bearer SUA_API_KEY"
+
+},
+
+body:JSON.stringify({
+
+title: course.title,
+
+description:
+`Acesso ao curso ${course.title}`,
+
+amount:
+Math.round(
+course.price * 100
+),
+
+quantity:1,
+
+checkoutType:"redirect",
+
+externalReference:
+`${userId}-${courseId}`,
+
+redirectUrl:
+"https://avivai-frontend.vercel.app/payment-success"
+
+})
+
+}
+
+);
+
+const data =
+await response.json();
+
+console.log(data);
+
+res.json(data);
+
+}catch(error){
+
+console.log(error);
+
+res.status(500).json({
+error:"Erro checkout"
 });
 
 }
