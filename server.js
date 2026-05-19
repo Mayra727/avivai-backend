@@ -15,6 +15,8 @@ import multer from "multer";
 import nodemailer
 from "nodemailer";
 
+import WatchProgress from "./models/WatchProgress.js";
+
 import { v2 as cloudinary } from "cloudinary";
 
 dotenv.config();
@@ -62,7 +64,23 @@ const upload = multer({
 // CONFIG
 // =========================
 const app = express();
-app.use(cors());
+
+app.use(cors({
+
+  origin:[
+
+    "https://avivaioficial.com.br",
+
+    "https://www.avivaioficial.com.br",
+
+    "https://avivai-frontend.vercel.app"
+
+  ],
+
+  credentials:true
+
+}));
+
 app.use(express.json({
   limit: "200mb"
 }));
@@ -493,7 +511,7 @@ externalReference:
 `${userId}-${courseId}`,
 
 redirectUrl:
-"https://avivai-frontend.vercel.app/payment-success"
+"https://avivaioficial.com.br/payment-success"
 
 })
 
@@ -567,6 +585,114 @@ error:"Erro"
 
 });
 
+
+// =========================
+// SAVE VIDEO PROGRESS
+// =========================
+
+app.post(
+"/watch-progress",
+
+async(req,res)=>{
+
+try{
+
+const {
+userId,
+courseId,
+lessonId,
+videoTime
+} = req.body;
+
+const existing =
+await WatchProgress.findOne({
+
+userId,
+courseId,
+lessonId
+
+});
+
+if(existing){
+
+existing.videoTime =
+videoTime;
+
+existing.updatedAt =
+new Date();
+
+await existing.save();
+
+return res.json(existing);
+
+}
+
+const progress =
+await WatchProgress.create({
+
+userId,
+courseId,
+lessonId,
+videoTime
+
+});
+
+res.json(progress);
+
+}catch(error){
+
+console.log(error);
+
+res.status(500).json({
+error:"Erro ao salvar progresso"
+});
+
+}
+
+});
+
+
+// =========================
+// GET VIDEO PROGRESS
+// =========================
+
+app.get(
+"/watch-progress/:userId/:courseId/:lessonId",
+
+async(req,res)=>{
+
+try{
+
+const {
+userId,
+courseId,
+lessonId
+} = req.params;
+
+const progress =
+await WatchProgress.findOne({
+
+userId,
+courseId,
+lessonId
+
+});
+
+res.json(progress || {
+videoTime:0
+});
+
+}catch(error){
+
+console.log(error);
+
+res.status(500).json({
+error:"Erro ao buscar progresso"
+});
+
+}
+
+});
 
 // =========================
 // SALVAR PROGRESSO
@@ -839,7 +965,7 @@ await user.save();
 
 const resetLink =
 
-`https://avivai-frontend.vercel.app/reset-password/${resetToken}`;
+`https://avivaioficial.com.br/reset-password/${resetToken}`;
 
 await fetch(
 
