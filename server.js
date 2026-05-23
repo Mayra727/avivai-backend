@@ -1223,6 +1223,51 @@ hasAccess:false
 });
 
 // =========================
+// UPDATE COURSE
+// =========================
+
+app.put("/courses/:id", async (req, res) => {
+
+  try {
+
+    const {
+      title,
+      price,
+      modules
+    } = req.body;
+
+    const updatedCourse =
+      await Course.findByIdAndUpdate(
+
+        req.params.id,
+
+        {
+          title,
+          price,
+          modules
+        },
+
+        {
+          new: true
+        }
+
+      );
+
+    res.json(updatedCourse);
+
+  } catch (error) {
+
+    console.log(error);
+
+    res.status(500).json({
+      error: "Erro ao atualizar curso"
+    });
+
+  }
+
+});
+
+// =========================
 // DELETE
 // =========================
 
