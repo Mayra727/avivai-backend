@@ -827,6 +827,30 @@ app.get("/courses/:id", async (req, res) => {
 });
 
 // =========================
+// GET USERS
+// =========================
+
+app.get("/users", async (req, res) => {
+
+  try {
+
+    const users = await User.find();
+
+    res.json(users);
+
+  } catch (error) {
+
+    console.log(error);
+
+    res.status(500).json({
+      error: "Erro ao buscar usuários"
+    });
+
+  }
+
+});
+
+// =========================
 // REGISTER
 // =========================
 app.post("/register", async (req, res) => {
