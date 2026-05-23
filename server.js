@@ -262,6 +262,46 @@ app.post(
 );
 
 // =========================
+// UPLOAD PDF
+// =========================
+
+app.post(
+  "/upload-pdf",
+  upload.single("pdf"),
+  async (req, res) => {
+
+    try {
+
+      const result =
+        await cloudinary.uploader.upload(
+
+          req.file.path,
+
+          {
+            resource_type: "raw",
+            folder: "courses/pdfs"
+          }
+
+        );
+
+      res.json({
+        url: result.secure_url
+      });
+
+    } catch (error) {
+
+      console.log(error);
+
+      res.status(500).json({
+        error: "Erro upload PDF"
+      });
+
+    }
+
+  }
+);
+
+// =========================
 // LISTAR CURSOS
 // =========================
 
