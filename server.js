@@ -309,10 +309,14 @@ app.post(
 
     } catch (error) {
 
+      console.log("❌ PDF ERROR");
+
       console.log(error);
 
+      console.log(error.message);
+
       res.status(500).json({
-        error: "Erro upload PDF"
+        error: error.message
       });
 
     }
