@@ -54,10 +54,15 @@ console.log("🔥 CLOUD:", process.env.CLOUDINARY_CLOUD_NAME);
 console.log("🔥 KEY:", process.env.CLOUDINARY_API_KEY);
 console.log("🔥 SECRET:", process.env.CLOUDINARY_API_SECRET);
 
+
 const upload = multer({
+
+  storage: multer.memoryStorage(),
+
   limits: {
     fileSize: 200 * 1024 * 1024
   }
+
 });
 
 // =========================
@@ -277,17 +282,42 @@ app.post(
 
     try {
 
+      const streamUpload = () => {
+
+        return new Promise((resolve, reject) => {
+
+          const stream =
+            cloudinary.uploader.upload_stream(
+
+              {
+                resource_type: "raw",
+                folder: "courses/pdfs"
+              },
+
+              (error, result) => {
+
+                if (result) {
+
+                  resolve(result);
+
+                } else {
+
+                  reject(error);
+
+                }
+
+              }
+
+            );
+
+          stream.end(req.file.buffer);
+
+        });
+
+      };
+
       const result =
-        await cloudinary.uploader.upload(
-
-          req.file.path,
-
-          {
-            resource_type: "raw",
-            folder: "courses/pdfs"
-          }
-
-        );
+        await streamUpload();
 
       res.json({
         url: result.secure_url
