@@ -130,6 +130,11 @@ type: {
     default: 0
   },
 
+promoPrice: {
+  type: Number,
+  default: 0
+},
+
   modules: [ModuleSchema],
 
   creatorId: String,
@@ -348,7 +353,13 @@ console.log(
 
   try {
 
-    let { title, price, modules, creatorId } = req.body;
+    let {
+  title,
+  price,
+  promoPrice,
+  modules,
+  creatorId
+} = req.body;
 
     // 🔥 garante array
     if (!Array.isArray(modules)) {
@@ -415,6 +426,8 @@ console.log(
     const course = await Course.create({
       title: title || "",
       price: Number(price) || 0,
+      promoPrice:
+  Number(promoPrice) || 0,
       modules: safeModules,
       creatorId
     });
@@ -1297,10 +1310,11 @@ app.put("/courses/:id", async (req, res) => {
   try {
 
     const {
-      title,
-      price,
-      modules
-    } = req.body;
+  title,
+  price,
+  promoPrice,
+  modules
+} = req.body;
 
     const updatedCourse =
       await Course.findByIdAndUpdate(
@@ -1310,6 +1324,7 @@ app.put("/courses/:id", async (req, res) => {
         {
           title,
           price,
+          promoPrice,
           modules
         },
 
