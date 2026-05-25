@@ -925,7 +925,10 @@ app.post("/register", async (req, res) => {
       password
     } = req.body;
 
-    // 🔥 limpa email
+console.log(
+      "BODY REGISTER:",
+      req.body
+    );
 
     email =
       email.trim().toLowerCase();
@@ -961,18 +964,15 @@ app.post("/register", async (req, res) => {
       });
 
     console.log(
-      "✅ USUÁRIO CRIADO:",
-      user.email
+      "USER SALVO:",
+      user
     );
 
     res.json(user);
 
   } catch (error) {
 
-    console.log(
-      "❌ ERRO REGISTER:",
-      error
-    );
+    console.log(error);
 
     res.status(500).json({
       error:
@@ -980,7 +980,6 @@ app.post("/register", async (req, res) => {
     });
 
   }
-
 });
 
 // =========================
