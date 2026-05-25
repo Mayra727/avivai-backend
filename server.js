@@ -255,7 +255,7 @@ app.post(
 
     try {
 
-      const result = await cloudinary.uploader.upload(
+      const result = await cloudinary.uploader.upload_large(
         req.file.path,
         {
           resource_type: "video",
@@ -292,12 +292,12 @@ app.post(
       console.log(req.file);
 
       const result =
-        await cloudinary.uploader.upload(
+        await cloudinary.uploader.upload_large(
 
           req.file.path,
 
           {
-            resource_type: "auto",
+            resource_type: "raw",
             folder: "courses/pdfs"
           }
 
