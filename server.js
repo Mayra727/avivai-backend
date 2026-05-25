@@ -57,7 +57,7 @@ console.log("🔥 SECRET:", process.env.CLOUDINARY_API_SECRET);
 
 const upload = multer({
 
-  storage: multer.memoryStorage(),
+  dest: "uploads/",
 
   limits: {
     fileSize: 200 * 1024 * 1024
