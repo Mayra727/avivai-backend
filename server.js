@@ -54,6 +54,7 @@ console.log("🔥 CLOUD:", process.env.CLOUDINARY_CLOUD_NAME);
 console.log("🔥 KEY:", process.env.CLOUDINARY_API_KEY);
 console.log("🔥 SECRET:", process.env.CLOUDINARY_API_SECRET);
 
+import fs from "fs";
 
 const upload = multer({
 
@@ -64,6 +65,12 @@ const upload = multer({
   }
 
 });
+
+if (!fs.existsSync("uploads")) {
+
+  fs.mkdirSync("uploads");
+
+}
 
 // =========================
 // CONFIG
