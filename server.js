@@ -125,8 +125,16 @@ const LessonSchema = new mongoose.Schema({
 });
 
 const ModuleSchema = new mongoose.Schema({
+
   title: String,
+
+  pdf: {
+    type: String,
+    default: ""
+  },
+
   lessons: [LessonSchema]
+
 });
 
 const CourseSchema = new mongoose.Schema({
@@ -145,6 +153,11 @@ type: {
 promoPrice: {
   type: Number,
   default: 0
+},
+
+initialLessons: {
+  type: Array,
+  default: []
 },
 
   modules: [ModuleSchema],
@@ -375,9 +388,11 @@ console.log(
   title,
   price,
   promoPrice,
+  initialLessons,
   modules,
   creatorId
 } = req.body;
+
 
     // 🔥 garante array
     if (!Array.isArray(modules)) {
@@ -435,20 +450,34 @@ console.log(
       }
 
       return {
-        title: m.title || "",
-        lessons: safeLessons
-      };
-    });
+
+  title: m.title || "",
+
+  pdf: m.pdf || "",
+
+  lessons: safeLessons
+
+};
+});
 
     // 🔥 cria curso
     const course = await Course.create({
-      title: title || "",
-      price: Number(price) || 0,
-      promoPrice:
-  Number(promoPrice) || 0,
-      modules: safeModules,
-      creatorId
-    });
+
+  title: title || "",
+
+  price: Number(price) || 0,
+
+  promoPrice:
+    Number(promoPrice) || 0,
+
+  initialLessons:
+    initialLessons || [],
+
+  modules: safeModules,
+
+  creatorId
+
+});
 
     res.status(201).json(course);
 
