@@ -356,6 +356,55 @@ app.post(
   }
 );
 
+app.post(
+  "/create-access",
+  async (req, res) => {
+
+    try {
+
+      const {
+        userId,
+        courseId
+      } = req.body;
+
+      const exists =
+        await Access.findOne({
+          userId,
+          courseId
+        });
+
+      if(exists){
+
+        return res.json(exists);
+
+      }
+
+      const access =
+        await Access.create({
+
+          userId,
+
+          courseId,
+
+          status:"pendente"
+
+        });
+
+      res.json(access);
+
+    } catch (error) {
+
+      console.log(error);
+
+      res.status(500).json({
+        error:"Erro"
+      });
+
+    }
+
+  }
+);
+
 // =========================
 // LISTAR CURSOS
 // =========================
@@ -663,6 +712,7 @@ error:"Erro checkout"
 // MEUS CURSOS
 // =========================
 
+
 app.get(
 "/my-courses/:userId",
 
@@ -670,17 +720,19 @@ async(req,res)=>{
 
 try{
 
-const purchases =
-await Purchase.find({
+const access =
+await Access.find({
 
 userId:
-req.params.userId
+req.params.userId,
+
+status:"liberado"
 
 });
 
 const courseIds =
-purchases.map(
-(p)=>p.courseId
+access.map(
+(a)=>a.courseId
 );
 
 const courses =
@@ -705,7 +757,6 @@ error:"Erro"
 }
 
 });
-
 
 // =========================
 // SAVE VIDEO PROGRESS
