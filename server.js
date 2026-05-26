@@ -225,6 +225,25 @@ const User = mongoose.model("User", new mongoose.Schema({
 
 }));
 
+const Access = mongoose.model(
+
+  "Access",
+
+  new mongoose.Schema({
+
+    userId:String,
+
+    courseId:String,
+
+    status:{
+      type:String,
+      default:"pendente"
+    }
+
+  })
+
+);
+
 // =========================
 // AUTH
 // =========================
@@ -504,7 +523,7 @@ courseId
 }=req.body;
 
 const exists =
-await Purchase.findOne({
+await Access.findOne({
 userId,
 courseId
 });
@@ -517,10 +536,12 @@ success:true
 
 }
 
-await Purchase.create({
+await Access.create({
 
 userId,
-courseId
+courseId,
+
+status:"liberado"
 
 });
 
@@ -911,6 +932,71 @@ app.get("/users", async (req, res) => {
   }
 
 });
+
+// =========================
+// RELEASE ACCESS
+// =========================
+
+app.put(
+  "/release-access/:id",
+  async (req, res) => {
+
+    try {
+
+      await Access.findByIdAndUpdate(
+
+        req.params.id,
+
+        {
+          status:"liberado"
+        }
+
+      );
+
+      res.json({
+        success:true
+      });
+
+    } catch (error) {
+
+      console.log(error);
+
+      res.status(500).json({
+        error:"Erro liberar"
+      });
+
+    }
+
+  }
+);
+
+// =========================
+// ACCESS LIST
+// =========================
+
+app.get(
+  "/access-list",
+  async (req, res) => {
+
+    try {
+
+      const access =
+        await Access.find();
+
+      res.json(access);
+
+    } catch (error) {
+
+      console.log(error);
+
+      res.status(500).json({
+        error:"Erro"
+      });
+
+    }
+
+  }
+);
 
 // =========================
 // REGISTER
