@@ -1453,17 +1453,34 @@ hasAccess:true
 const purchase =
 await Purchase.findOne({
 
-userId,
-courseId
+  userId,
+  courseId
 
 });
 
-// 🔥 acesso liberado
 if(purchase){
 
-return res.json({
-hasAccess:true
+  return res.json({
+    hasAccess:true
+  });
+
+}
+
+// 🔥 acesso manual liberado
+const access =
+await Access.findOne({
+
+  userId,
+  courseId,
+  status:"liberado"
+
 });
+
+if(access){
+
+  return res.json({
+    hasAccess:true
+  });
 
 }
 
