@@ -1004,7 +1004,10 @@ const userIds =
 [
   ...new Set(
     accesses.map(
-      a=>a.userId
+      a =>
+        new mongoose.Types.ObjectId(
+          a.userId
+        )
     )
   )
 ];
