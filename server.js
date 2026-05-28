@@ -985,6 +985,56 @@ app.get("/users", async (req, res) => {
 });
 
 // =========================
+// ALUNOS LIBERADOS
+// =========================
+
+app.get(
+"/alunos-liberados",
+
+async(req,res)=>{
+
+try{
+
+const accesses =
+await Access.find({
+status:"liberado"
+});
+
+const userIds =
+[
+  ...new Set(
+    accesses.map(
+      a=>a.userId
+    )
+  )
+];
+
+const users =
+await User.find({
+
+  _id:{
+    $in:userIds
+  }
+
+}).select(
+  "name email role"
+);
+
+res.json(users);
+
+}catch(error){
+
+console.log(error);
+
+res.status(500).json({
+error:"Erro"
+});
+
+}
+
+});
+
+// =========================
 // RELEASE ACCESS
 // =========================
 
