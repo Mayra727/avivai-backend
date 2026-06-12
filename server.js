@@ -1540,10 +1540,12 @@ app.put("/courses/:id", async (req, res) => {
 
   try {
 
-    const {
+const {
   title,
   price,
   promoPrice,
+  type,
+  initialLessons,
   modules
 } = req.body;
 
@@ -1556,6 +1558,8 @@ app.put("/courses/:id", async (req, res) => {
           title,
           price,
           promoPrice,
+          type,
+          initialLessons,
           modules
         },
 
