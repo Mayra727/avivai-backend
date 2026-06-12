@@ -615,7 +615,6 @@ error:"Erro"
 // =========================
 
 app.post(
-
 "/create-checkout",
 
 async(req,res)=>{
@@ -623,25 +622,10 @@ async(req,res)=>{
 try{
 
 const {
-courseId,
-userId
+title,
+price
 }=req.body;
 
-// 🔥 busca curso
-const course =
-await Course.findById(
-courseId
-);
-
-if(!course){
-
-return res.status(404).json({
-error:"Curso não encontrado"
-});
-
-}
-
-// 🔥 cria checkout InfinitePay
 const response =
 await fetch(
 
@@ -657,28 +641,22 @@ headers:{
 "application/json",
 
 "Authorization":
-"Bearer SUA_API_KEY"
+`Bearer ${process.env.INFINITEPAY_API_KEY}`
 
 },
 
 body:JSON.stringify({
 
-title: course.title,
+title,
 
-description:
-`Acesso ao curso ${course.title}`,
+description:title,
 
 amount:
-Math.round(
-course.price * 100
-),
+Math.round(price * 100),
 
 quantity:1,
 
 checkoutType:"redirect",
-
-externalReference:
-`${userId}-${courseId}`,
 
 redirectUrl:
 "https://avivaioficial.com.br/payment-success"
@@ -1625,6 +1603,81 @@ app.delete("/courses/:id", async (req, res) => {
       error: "Erro ao excluir curso"
     });
   }
+});
+
+// =========================
+// STUDENT PROGRESS
+// =========================
+
+app.get(
+"/student-progress/:userId",
+
+async(req,res)=>{
+
+try{
+
+const progress =
+await Progress.find({
+
+  userId:req.params.userId,
+
+  completed:true
+
+});
+
+const completedLessons =
+progress.length;
+
+const totalLessons =
+await Course.aggregate([
+
+{
+  $unwind:"$modules"
+},
+
+{
+  $project:{
+    lessonsCount:{
+      $size:"$modules.lessons"
+    }
+  }
+}
+
+]);
+
+const total =
+totalLessons.reduce(
+
+  (acc,item)=>
+    acc + item.lessonsCount,
+
+  0
+
+);
+
+const percentage =
+total > 0
+
+? Math.floor(
+    (completedLessons / total) * 100
+  )
+
+: 0;
+
+res.json({
+percentage
+});
+
+}catch(error){
+
+console.log(error);
+
+res.status(500).json({
+percentage:0
+});
+
+}
+
 });
 
 // =========================
