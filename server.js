@@ -77,20 +77,26 @@ if (!fs.existsSync("uploads")) {
 // =========================
 const app = express();
 
+
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://avivaioficial.com.br",
+  "https://www.avivaioficial.com.br",
+  "https://avivai-frontend.vercel.app"
+];
+
 app.use(cors({
+  origin: function (origin, callback) {
+    // Permite Postman e requisições sem Origin
+    if (!origin) return callback(null, true);
 
-  origin:[
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
 
-    "https://avivaioficial.com.br",
-
-    "https://www.avivaioficial.com.br",
-
-    "https://avivai-frontend.vercel.app"
-
-  ],
-
-  credentials:true
-
+    return callback(new Error("CORS não permitido"));
+  },
+  credentials: true
 }));
 
 app.use(express.json({
